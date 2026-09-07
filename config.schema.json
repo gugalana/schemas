@@ -12,6 +12,10 @@
                     "type": "string",
                     "description": "Absolute process-local storage root. Never part of a frozen trader configuration."
                 },
+                "collector": {
+                    "$ref": "#/definitions/IConfigCollector",
+                    "description": "Selected server Collector source; desktop-only configurations do not start a Collector."
+                },
                 "miner": {
                     "$ref": "#/definitions/IConfigMiner",
                     "description": "Miner configuration"
@@ -34,6 +38,20 @@
             ],
             "additionalProperties": false,
             "description": "Main configuration"
+        },
+        "IConfigCollector": {
+            "type": "object",
+            "properties": {
+                "provider": {
+                    "type": "string",
+                    "const": "massive"
+                }
+            },
+            "required": [
+                "provider"
+            ],
+            "additionalProperties": false,
+            "description": "One source is selected for server live, recovery and finalized-day maintenance."
         },
         "IConfigMiner": {
             "type": "object",

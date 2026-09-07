@@ -8,6 +8,9 @@
                 "dataRoot": {
                     "type": "string"
                 },
+                "collector": {
+                    "$ref": "#/definitions/IConfigCollector"
+                },
                 "miner": {
                     "$ref": "#/definitions/IConfigMiner"
                 },
@@ -27,6 +30,19 @@
             "required": [
                 "dataRoot",
                 "trader"
+            ],
+            "additionalProperties": false
+        },
+        "IConfigCollector": {
+            "type": "object",
+            "properties": {
+                "provider": {
+                    "type": "string",
+                    "const": "massive"
+                }
+            },
+            "required": [
+                "provider"
             ],
             "additionalProperties": false
         },
