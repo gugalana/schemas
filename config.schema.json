@@ -123,9 +123,22 @@
                     },
                     "description": "Optional risk overrides keyed by canonical strategy type. Each entry may prefer a generic risk profile and replace individual fields after generic profile selection."
                 },
+                "targetExitTolerancePerc": {
+                    "type": "number",
+                    "description": "Maximum adverse retracement from a touched target at the completed-minute close. Expressed as a ratio of the raw target price: 0.002 means 0.2%. This controls Market submission, not the eventual fill price. Zero requires a close at or beyond target.",
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "strategyTargetExitOverrides": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IConfigStrategyTargetExitOverride"
+                    },
+                    "description": "Optional target tolerance replacements keyed by the exact versioned strategy id."
+                },
                 "defaultMaxLossPerDay": {
                     "$ref": "#/definitions/ICompositeValue",
-                    "description": "Default hard account loss limit used when an account does not override it. Fixed values use account currency; percentage values use the highest tax-neutral performance equity in the current risk day. Historical execution cancels pending intent and creates reduce-only liquidation orders after breach; live execution currently blocks later entries. This limit is outside selectable and strategy profiles."
+                    "description": "Default hard account loss limit used when an account does not override it. Fixed values use account currency; percentage values use risk-day opening equity adjusted for nontrading cash flows. The observed limit blocks later entries in historical and Live execution without liquidation or cancellation of accepted orders. This limit is outside selectable and strategy profiles."
                 },
                 "maxContextBars": {
                     "type": "number",
@@ -166,6 +179,8 @@
                 "instrumentUniverse",
                 "riskProfiles",
                 "strategyRiskOverrides",
+                "targetExitTolerancePerc",
+                "strategyTargetExitOverrides",
                 "defaultMaxLossPerDay",
                 "maxContextBars",
                 "approachingSignals",
@@ -519,6 +534,27 @@
             },
             "additionalProperties": false,
             "description": "Field-level historical-volatility values inside one strategy risk override."
+        },
+        "IConfigStrategyTargetExitOverride": {
+            "type": "object",
+            "properties": {
+                "strategyId": {
+                    "type": "string",
+                    "description": "Exact strategy id from its catalog, including version (for example argo.quality-wide-target@v1)."
+                },
+                "tolerancePerc": {
+                    "type": "number",
+                    "description": "Adverse tolerance as a ratio of raw target price; zero requires a close at or beyond target.",
+                    "minimum": 0,
+                    "maximum": 1
+                }
+            },
+            "required": [
+                "strategyId",
+                "tolerancePerc"
+            ],
+            "additionalProperties": false,
+            "description": "Strategy-specific replacement for the common completed-minute target tolerance."
         },
         "IConfigApproachSignals": {
             "type": "object",

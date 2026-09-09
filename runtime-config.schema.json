@@ -195,6 +195,17 @@
                         "$ref": "#/definitions/IConfigStrategyRiskOverride"
                     }
                 },
+                "targetExitTolerancePerc": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "strategyTargetExitOverrides": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IConfigStrategyTargetExitOverride"
+                    }
+                },
                 "defaultMaxLossPerDay": {
                     "$ref": "#/definitions/ICompositeValue"
                 },
@@ -242,7 +253,9 @@
                 "notifications",
                 "riskProfiles",
                 "strategies",
-                "strategyRiskOverrides"
+                "strategyRiskOverrides",
+                "strategyTargetExitOverrides",
+                "targetExitTolerancePerc"
             ],
             "additionalProperties": false
         },
@@ -535,6 +548,24 @@
                     "exclusiveMinimum": 0
                 }
             },
+            "additionalProperties": false
+        },
+        "IConfigStrategyTargetExitOverride": {
+            "type": "object",
+            "properties": {
+                "strategyId": {
+                    "type": "string"
+                },
+                "tolerancePerc": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                }
+            },
+            "required": [
+                "strategyId",
+                "tolerancePerc"
+            ],
             "additionalProperties": false
         },
         "IConfigApproachSignals": {

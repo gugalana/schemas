@@ -45,7 +45,7 @@
                 },
                 "maxLossPerDay": {
                     "$ref": "#/definitions/ICompositeValue",
-                    "description": "Optional account-specific replacement for trader.defaultMaxLossPerDay. Fixed values use account currency; percentage values use the highest tax-neutral performance equity in the current risk day. Historical execution cancels pending intent and creates reduce-only liquidation orders after breach, while live execution currently blocks later entries. A strategy risk override cannot change this account-wide limit."
+                    "description": "Optional account-specific replacement for trader.defaultMaxLossPerDay. Fixed values use account currency; percentage values use risk-day opening equity adjusted for nontrading cash flows. Historical and Live execution block subsequent entries after an observed breach without liquidating positions or canceling accepted orders. A strategy risk override cannot change this account-wide limit."
                 },
                 "riskOverrides": {
                     "$ref": "#/definitions/ILiveRiskOverrides",
