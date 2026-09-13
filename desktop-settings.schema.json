@@ -1,30 +1,102 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/definitions/IConfig",
+    "$ref": "#/definitions/IDesktopConfig",
     "definitions": {
-        "IConfig": {
+        "IDesktopConfig": {
             "type": "object",
             "properties": {
                 "$schema": {
                     "type": "string"
                 },
-                "dataRoot": {
-                    "type": "string",
-                    "description": "Absolute process-local storage root. Never part of a frozen trader configuration."
-                },
-                "collector": {
-                    "$ref": "#/definitions/IConfigCollector",
-                    "description": "Selected server Collector source; desktop-only configurations do not start a Collector."
-                },
                 "trader": {
-                    "$ref": "#/definitions/IOperationalTraderConfig",
-                    "description": "Trader configuration"
+                    "$ref": "#/definitions/IBacktestTraderConfig"
+                },
+                "miner": {
+                    "$ref": "#/definitions/IConfigMiner"
                 },
                 "batchServices": {
                     "type": "object",
                     "properties": {
                         "massive": {
-                            "$ref": "#/definitions/IConfigServerBatchService"
+                            "type": "object",
+                            "properties": {
+                                "rateLimit": {
+                                    "$ref": "#/definitions/IConfigRateLimit"
+                                },
+                                "flatFiles": {
+                                    "type": "object",
+                                    "properties": {
+                                        "ohlc": {
+                                            "type": "object",
+                                            "properties": {
+                                                "enabled": {
+                                                    "type": "boolean",
+                                                    "description": "Whether sync and default import actions process this dataset."
+                                                },
+                                                "from": {
+                                                    "type": "string",
+                                                    "description": "First source date requested when no completed local import exists."
+                                                },
+                                                "universe": {
+                                                    "$ref": "#/definitions/IConfigMassiveFlatFileUniverse",
+                                                    "description": "Optional symbol scope. Omit both lists to retain every source ticker."
+                                                }
+                                            },
+                                            "required": [
+                                                "enabled"
+                                            ],
+                                            "additionalProperties": false
+                                        },
+                                        "trades": {
+                                            "type": "object",
+                                            "properties": {
+                                                "enabled": {
+                                                    "type": "boolean",
+                                                    "description": "Whether sync and default import actions process this dataset."
+                                                },
+                                                "from": {
+                                                    "type": "string",
+                                                    "description": "First source date requested when no completed local import exists."
+                                                },
+                                                "universe": {
+                                                    "$ref": "#/definitions/IConfigMassiveFlatFileUniverse",
+                                                    "description": "Optional symbol scope. Omit both lists to retain every source ticker."
+                                                }
+                                            },
+                                            "required": [
+                                                "enabled"
+                                            ],
+                                            "additionalProperties": false
+                                        },
+                                        "quotes": {
+                                            "type": "object",
+                                            "properties": {
+                                                "enabled": {
+                                                    "type": "boolean",
+                                                    "description": "Whether sync and default import actions process this dataset."
+                                                },
+                                                "from": {
+                                                    "type": "string",
+                                                    "description": "First source date requested when no completed local import exists."
+                                                },
+                                                "universe": {
+                                                    "$ref": "#/definitions/IConfigMassiveFlatFileUniverse",
+                                                    "description": "Optional symbol scope. Omit both lists to retain every source ticker."
+                                                }
+                                            },
+                                            "required": [
+                                                "enabled"
+                                            ],
+                                            "additionalProperties": false
+                                        }
+                                    },
+                                    "additionalProperties": false
+                                }
+                            },
+                            "required": [
+                                "flatFiles"
+                            ],
+                            "additionalProperties": false
                         },
                         "alpaca": {
                             "type": "object",
@@ -33,42 +105,34 @@
                                     "$ref": "#/definitions/IConfigRateLimit"
                                 }
                             },
+                            "required": [
+                                "rateLimit"
+                            ],
                             "additionalProperties": false
                         }
                     },
-                    "additionalProperties": false,
-                    "description": "Third-party batch service configuration used by scheduler and importers"
+                    "required": [
+                        "massive",
+                        "alpaca"
+                    ],
+                    "additionalProperties": false
                 }
             },
             "required": [
-                "dataRoot",
-                "collector",
-                "trader"
+                "trader",
+                "miner",
+                "batchServices"
             ],
             "additionalProperties": false,
-            "description": "Main configuration"
+            "description": "Desktop-owned defaults shared by local execution entry points."
         },
-        "IConfigCollector": {
-            "type": "object",
-            "properties": {
-                "provider": {
-                    "type": "string",
-                    "const": "massive"
-                }
-            },
-            "required": [
-                "provider"
-            ],
-            "additionalProperties": false,
-            "description": "One source is selected for server live, recovery and finalized-day maintenance."
-        },
-        "IOperationalTraderConfig": {
+        "IBacktestTraderConfig": {
             "type": "object",
             "properties": {
                 "strategies": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/StrategySlug"
+                        "type": "string"
                     },
                     "description": "Strategy slugs selected by the caller; frozen runtime configurations contain resolved concrete keys."
                 },
@@ -79,14 +143,14 @@
                 "riskProfiles": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/IConfigLiveRiskProfile"
+                        "$ref": "#/definitions/IConfigRiskProfile"
                     },
                     "description": "Complete reusable entry-risk profiles selectable by accounts. The selected profile supplies the base values before optional strategyRiskOverrides entries."
                 },
                 "strategyRiskOverrides": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/IConfigLiveStrategyRiskOverride"
+                        "$ref": "#/definitions/IConfigStrategyRiskOverride"
                     },
                     "description": "Optional risk overrides keyed by canonical strategy type. Each entry may prefer a generic risk profile and replace individual fields after generic profile selection."
                 },
@@ -123,30 +187,17 @@
                     "type": "number",
                     "description": "Maximum retained drawing lifetimes for each strategy and reference-symbol lane."
                 },
-                "live": {
-                    "$ref": "#/definitions/IConfigLiveTrading"
-                },
-                "notifications": {
-                    "type": "object",
-                    "properties": {
-                        "info": {
-                            "$ref": "#/definitions/INotificationConfig"
-                        },
-                        "error": {
-                            "$ref": "#/definitions/INotificationConfig"
-                        }
-                    },
-                    "additionalProperties": false
+                "backtest": {
+                    "$ref": "#/definitions/IConfigBacktest"
                 }
             },
             "required": [
                 "approachingSignals",
+                "backtest",
                 "defaultMaxLossPerDay",
                 "instrumentUniverse",
-                "live",
                 "maxContextBars",
                 "maxDrawings",
-                "notifications",
                 "riskProfiles",
                 "strategies",
                 "strategyRiskOverrides",
@@ -154,12 +205,7 @@
                 "targetExitTolerancePerc"
             ],
             "additionalProperties": false,
-            "description": "Server defaults select only published production strategies; frozen day inputs resolve their keys."
-        },
-        "StrategySlug": {
-            "type": "string",
-            "const": "argo.quality-wide-target",
-            "description": "Public production strategy slug type."
+            "description": "Complete historical execution configuration, supplied by the local caller."
         },
         "IConfigInstrumentUniverse": {
             "type": "object",
@@ -189,9 +235,8 @@
             "additionalProperties": false,
             "description": "Instrument universe configuration"
         },
-        "IConfigLiveRiskProfile": {
+        "IConfigRiskProfile": {
             "type": "object",
-            "additionalProperties": false,
             "properties": {
                 "id": {
                     "type": "string",
@@ -212,6 +257,10 @@
                 "hv": {
                     "$ref": "#/definitions/IConfigHVRule",
                     "description": "Optional historical-volatility sizing rule. Its lookback extends strategy warmup, its bands scale the loss budget, and its shock estimates per-unit risk when the signal has no explicit stop distance."
+                },
+                "backtest": {
+                    "$ref": "#/definitions/IConfigRiskBacktestProfile",
+                    "description": "Backtest execution-friction factors applied by the simulated broker and portfolio reservations."
                 },
                 "minCapitalPerTrade": {
                     "$ref": "#/definitions/ICompositeValue",
@@ -250,10 +299,11 @@
             },
             "required": [
                 "id",
-                "maxDrawdownPercPerDay",
-                "maxRiskPercPerTrade"
+                "maxRiskPercPerTrade",
+                "maxDrawdownPercPerDay"
             ],
-            "description": "Entry-risk policy applicable to real broker execution."
+            "additionalProperties": false,
+            "description": "Complete reusable entry-risk profile configuration."
         },
         "IConfigHVRule": {
             "type": "object",
@@ -305,6 +355,23 @@
             "additionalProperties": false,
             "description": "Historical volatility-based risk rule configuration"
         },
+        "IConfigRiskBacktestProfile": {
+            "type": "object",
+            "properties": {
+                "spreadFactor": {
+                    "type": "number",
+                    "description": "Multiplier applied to the configured dynamic spread model during backtests. When omitted, spread may inherit slippageFactor; zero explicitly disables profile-level spread friction.",
+                    "minimum": 0
+                },
+                "slippageFactor": {
+                    "type": "number",
+                    "description": "Multiplier applied to the configured dynamic slippage model during sizing, reservation, and simulated fills. Zero explicitly disables profile-level slippage friction.",
+                    "minimum": 0
+                }
+            },
+            "additionalProperties": false,
+            "description": "Backtest-only execution-friction factors owned by a generic risk profile."
+        },
         "ICompositeValue": {
             "type": "object",
             "properties": {
@@ -330,9 +397,8 @@
                 "perc"
             ]
         },
-        "IConfigLiveStrategyRiskOverride": {
+        "IConfigStrategyRiskOverride": {
             "type": "object",
-            "additionalProperties": false,
             "properties": {
                 "strategyProfileId": {
                     "$ref": "#/definitions/StrategyRiskProfileId",
@@ -357,6 +423,10 @@
                 "hv": {
                     "$ref": "#/definitions/IConfigHVRuleOverride",
                     "description": "Optional field-level historical-volatility sizing overrides."
+                },
+                "backtest": {
+                    "$ref": "#/definitions/IConfigRiskBacktestProfile",
+                    "description": "Optional field-level backtest execution-friction overrides."
                 },
                 "minCapitalPerTrade": {
                     "$ref": "#/definitions/ICompositeValue",
@@ -396,7 +466,8 @@
             "required": [
                 "strategyProfileId"
             ],
-            "description": "Strategy entry-risk overrides applicable to real broker execution."
+            "additionalProperties": false,
+            "description": "Optional risk overrides keyed by a canonical strategy-type profile."
         },
         "StrategyRiskProfileId": {
             "type": "string",
@@ -515,129 +586,185 @@
             "additionalProperties": false,
             "description": "Approaching (pre-trigger) signals configuration"
         },
-        "IConfigLiveTrading": {
+        "IConfigBacktest": {
             "type": "object",
             "properties": {
-                "logLevel": {
-                    "type": "string",
-                    "enum": [
-                        "standard",
-                        "verbose"
-                    ],
-                    "description": "Diagnostic detail written to the live journal log; standard still retains errors and signal outcomes."
-                },
                 "useStrategyScores": {
                     "type": "boolean",
-                    "description": "Whether the live trader freezes and consumes causal strategy scores when it starts or restarts"
+                    "description": "Whether the backtest freezes and consumes causal strategy scores before it starts"
+                },
+                "startDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Start date; if missing, use maximum available local history"
+                },
+                "endDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "End date; if missing, run up to current date"
+                },
+                "spread": {
+                    "$ref": "#/definitions/IBacktestSpreadValue",
+                    "description": "Simulated or observed spread policy used by historical execution"
+                },
+                "slippage": {
+                    "$ref": "#/definitions/ICompositeDynamicValue",
+                    "description": "Simulated slippage per trade"
+                },
+                "executionBarVolumeParticipation": {
+                    "type": "number",
+                    "description": "Maximum share of the complete current raw execution bar volume exposed from its opening phase by the intentional ex-post fill model"
+                },
+                "optimization": {
+                    "$ref": "#/definitions/IConfigBacktestOptimization",
+                    "description": "Optional optimization mode. These flags preserve strategy-account behavior while omitting selected diagnostics, curves, or independent benchmark accounting to improve throughput."
+                },
+                "profiling": {
+                    "type": "boolean",
+                    "description": "Optional profiling for the historical backtest pipeline"
+                },
+                "journalKind": {
+                    "$ref": "#/definitions/JournalKind",
+                    "description": "Logical journal kind to assign to this backtest"
+                },
+                "initialCapital": {
+                    "type": "number",
+                    "description": "Initial capital for backtesting"
                 }
             },
             "required": [
-                "useStrategyScores"
+                "useStrategyScores",
+                "executionBarVolumeParticipation",
+                "initialCapital"
             ],
             "additionalProperties": false,
-            "description": "Live trading configuration"
+            "description": "Backtest configuration"
         },
-        "INotificationConfig": {
-            "type": "object",
-            "properties": {
-                "channels": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/NotificationChannel"
-                    },
-                    "description": "Channels where to send notifications - individual notifications can override this"
+        "IBacktestSpreadValue": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/ICompositeDynamicValue"
                 },
-                "webhooks": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/INotificationConfigWebhook"
-                    },
-                    "description": "Configuration for webhooks notification"
-                },
-                "telegram": {
-                    "$ref": "#/definitions/INotificationConfigTelegram",
-                    "description": "Configuration for notification on Telegram"
+                {
+                    "$ref": "#/definitions/IObservedSpreadValue"
                 }
-            },
-            "required": [
-                "channels"
-            ],
-            "additionalProperties": false
+            ]
         },
-        "NotificationChannel": {
-            "type": "string",
-            "enum": [
-                "app",
-                "webhook",
-                "telegram"
-            ],
-            "description": "Gugalana Copyright (c) Daniele Perilli"
-        },
-        "INotificationConfigWebhook": {
-            "type": "object",
-            "properties": {
-                "url": {
-                    "type": "string",
-                    "description": "Webhook URL"
+        "ICompositeDynamicValue": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/ICompositeValue"
                 },
-                "method": {
-                    "type": "string",
-                    "enum": [
-                        "POST",
-                        "GET"
-                    ],
-                    "description": "HTTP method - Default is 'GET'"
-                },
-                "messageWrapper": {
-                    "type": "string",
-                    "description": "Optional message wrapper\n\nSupported placeholders:\n- {body} - the notification message\n- {<meta_key1>}, {<meta_key1>}, ... - the notification meta keys, if any"
-                }
-            },
-            "required": [
-                "url"
-            ],
-            "additionalProperties": false
-        },
-        "INotificationConfigTelegram": {
-            "type": "object",
-            "properties": {
-                "chatIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "description": "A list of chats where to spread the notifications"
-                }
-            },
-            "required": [
-                "chatIds"
-            ],
-            "additionalProperties": false
-        },
-        "IConfigServerBatchService": {
-            "type": "object",
-            "properties": {
-                "rateLimit": {
-                    "$ref": "#/definitions/IConfigRateLimit"
-                },
-                "flatFiles": {
+                {
                     "type": "object",
                     "properties": {
-                        "ohlc": {
-                            "$ref": "#/definitions/IConfigServerDataset"
-                        },
-                        "trades": {
-                            "$ref": "#/definitions/IConfigServerDataset"
-                        },
-                        "quotes": {
-                            "$ref": "#/definitions/IConfigServerDataset"
+                        "type": {
+                            "type": "string",
+                            "const": "dynamic"
                         }
                     },
+                    "required": [
+                        "type"
+                    ],
                     "additionalProperties": false
+                }
+            ]
+        },
+        "IObservedSpreadValue": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "const": "observed"
+                },
+                "minimumCoverage": {
+                    "type": "number",
+                    "description": "Minimum valid quoted-time ratio required from the latest completed bar."
+                },
+                "maximumAgeMs": {
+                    "type": "number",
+                    "description": "Maximum age of the closing NBBO update at the execution decision."
+                }
+            },
+            "required": [
+                "type",
+                "minimumCoverage",
+                "maximumAgeMs"
+            ],
+            "additionalProperties": false
+        },
+        "IConfigBacktestOptimization": {
+            "type": "object",
+            "properties": {
+                "omitBenchmarks": {
+                    "type": "boolean",
+                    "description": "Omit account benchmark lanes and their persisted artifacts during the run"
+                },
+                "omitSignals": {
+                    "type": "boolean",
+                    "description": "Omit signals table rows during the run"
+                },
+                "omitNotifications": {
+                    "type": "boolean",
+                    "description": "Omit notification log entries during the run"
+                },
+                "omitEquityCurve": {
+                    "type": "boolean",
+                    "description": "Omit intermediate equity snapshots during the run"
                 }
             },
             "additionalProperties": false,
-            "description": "Server maintenance never owns full-history dates or raw archive destinations."
+            "description": "Optimization configuration"
+        },
+        "JournalKind": {
+            "type": "string",
+            "enum": [
+                "standard",
+                "research",
+                "oracle"
+            ]
+        },
+        "IConfigMiner": {
+            "type": "object",
+            "properties": {
+                "kinds": {
+                    "type": "object",
+                    "properties": {
+                        "intraday": {
+                            "$ref": "#/definitions/IConfigMinerKind"
+                        },
+                        "swing": {
+                            "$ref": "#/definitions/IConfigMinerKind"
+                        },
+                        "position": {
+                            "$ref": "#/definitions/IConfigMinerKind"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "description": "Mining configuration by horizon kind"
+                }
+            },
+            "required": [
+                "kinds"
+            ],
+            "additionalProperties": false,
+            "description": "Miner configuration"
+        },
+        "IConfigMinerKind": {
+            "type": "object",
+            "properties": {
+                "minMovePerc": {
+                    "type": "number",
+                    "description": "Minimum absolute hindsight movement as a ratio of entry price, where 1 is 100%.",
+                    "minimum": 0,
+                    "maximum": 1
+                }
+            },
+            "required": [
+                "minMovePerc"
+            ],
+            "additionalProperties": false,
+            "description": "Mining configuration for one horizon kind"
         },
         "IConfigRateLimit": {
             "type": "object",
@@ -664,22 +791,6 @@
             ],
             "additionalProperties": false,
             "description": "Rate limit configuration"
-        },
-        "IConfigServerDataset": {
-            "type": "object",
-            "properties": {
-                "enabled": {
-                    "type": "boolean"
-                },
-                "universe": {
-                    "$ref": "#/definitions/IConfigMassiveFlatFileUniverse"
-                }
-            },
-            "required": [
-                "enabled"
-            ],
-            "additionalProperties": false,
-            "description": "Configurable dataset admission and scope for operational maintenance."
         },
         "IConfigMassiveFlatFileUniverse": {
             "type": "object",

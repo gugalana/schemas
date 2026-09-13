@@ -1,185 +1,26 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/definitions/IRuntimeConfig",
+    "$ref": "#/definitions/IRuntimeTraderConfig",
     "definitions": {
-        "IRuntimeConfig": {
-            "type": "object",
-            "properties": {
-                "dataRoot": {
-                    "type": "string"
-                },
-                "collector": {
-                    "$ref": "#/definitions/IConfigCollector"
-                },
-                "miner": {
-                    "$ref": "#/definitions/IConfigMiner"
-                },
-                "batchServices": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "$ref": "#/definitions/IConfigBatchService"
-                    }
-                },
-                "$schema": {
-                    "type": "string"
-                },
-                "trader": {
-                    "$ref": "#/definitions/IRuntimeTraderConfig"
-                }
-            },
-            "required": [
-                "dataRoot",
-                "trader"
-            ],
-            "additionalProperties": false
-        },
-        "IConfigCollector": {
-            "type": "object",
-            "properties": {
-                "provider": {
-                    "type": "string",
-                    "const": "massive"
-                }
-            },
-            "required": [
-                "provider"
-            ],
-            "additionalProperties": false
-        },
-        "IConfigMiner": {
-            "type": "object",
-            "properties": {
-                "kinds": {
-                    "type": "object",
-                    "properties": {
-                        "intraday": {
-                            "$ref": "#/definitions/IConfigMinerKind"
-                        },
-                        "swing": {
-                            "$ref": "#/definitions/IConfigMinerKind"
-                        },
-                        "position": {
-                            "$ref": "#/definitions/IConfigMinerKind"
-                        }
-                    },
-                    "additionalProperties": false
-                }
-            },
-            "required": [
-                "kinds"
-            ],
-            "additionalProperties": false
-        },
-        "IConfigMinerKind": {
-            "type": "object",
-            "properties": {
-                "minMovePerc": {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 1
-                }
-            },
-            "required": [
-                "minMovePerc"
-            ],
-            "additionalProperties": false
-        },
-        "IConfigBatchService": {
-            "type": "object",
-            "properties": {
-                "rateLimit": {
-                    "$ref": "#/definitions/IConfigRateLimit"
-                },
-                "meta": {
-                    "type": "object",
-                    "additionalProperties": {}
-                },
-                "flatFiles": {
-                    "$ref": "#/definitions/IConfigMassiveFlatFiles"
-                }
-            },
-            "additionalProperties": false
-        },
-        "IConfigRateLimit": {
-            "type": "object",
-            "properties": {
-                "requests": {
-                    "type": "number",
-                    "minimum": 1
-                },
-                "windowMs": {
-                    "type": "number",
-                    "minimum": 1
-                },
-                "minDelayMs": {
-                    "type": "number",
-                    "minimum": 0
-                }
-            },
-            "required": [
-                "requests",
-                "windowMs"
-            ],
-            "additionalProperties": false
-        },
-        "IConfigMassiveFlatFiles": {
-            "type": "object",
-            "properties": {
-                "ohlc": {
-                    "$ref": "#/definitions/IConfigMassiveFlatFileDataset"
-                },
-                "trades": {
-                    "$ref": "#/definitions/IConfigMassiveFlatFileDataset"
-                },
-                "quotes": {
-                    "$ref": "#/definitions/IConfigMassiveFlatFileDataset"
-                }
-            },
-            "additionalProperties": false
-        },
-        "IConfigMassiveFlatFileDataset": {
-            "type": "object",
-            "properties": {
-                "enabled": {
-                    "type": "boolean"
-                },
-                "from": {
-                    "type": "string",
-                    "format": "date-time"
-                },
-                "rawArchivePath": {
-                    "type": "string"
-                },
-                "universe": {
-                    "$ref": "#/definitions/IConfigMassiveFlatFileUniverse"
-                }
-            },
-            "required": [
-                "enabled"
-            ],
-            "additionalProperties": false
-        },
-        "IConfigMassiveFlatFileUniverse": {
-            "type": "object",
-            "properties": {
-                "symbols": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "instrumentPoolIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            },
-            "additionalProperties": false
-        },
         "IRuntimeTraderConfig": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/IBacktestTraderConfig"
+                },
+                {
+                    "$ref": "#/definitions/ILiveTraderConfig"
+                }
+            ]
+        },
+        "IBacktestTraderConfig": {
             "type": "object",
             "properties": {
+                "strategies": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "instrumentUniverse": {
                     "$ref": "#/definitions/IConfigInstrumentUniverse"
                 },
@@ -218,29 +59,11 @@
                 "approachingSignals": {
                     "$ref": "#/definitions/IConfigApproachSignals"
                 },
+                "maxDrawings": {
+                    "type": "number"
+                },
                 "backtest": {
                     "$ref": "#/definitions/IConfigBacktest"
-                },
-                "live": {
-                    "$ref": "#/definitions/IConfigLiveTrading"
-                },
-                "notifications": {
-                    "type": "object",
-                    "properties": {
-                        "info": {
-                            "$ref": "#/definitions/INotificationConfig"
-                        },
-                        "error": {
-                            "$ref": "#/definitions/INotificationConfig"
-                        }
-                    },
-                    "additionalProperties": false
-                },
-                "strategies": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
                 }
             },
             "required": [
@@ -248,9 +71,8 @@
                 "backtest",
                 "defaultMaxLossPerDay",
                 "instrumentUniverse",
-                "live",
                 "maxContextBars",
-                "notifications",
+                "maxDrawings",
                 "riskProfiles",
                 "strategies",
                 "strategyRiskOverrides",
@@ -572,20 +394,7 @@
             "type": "object",
             "properties": {
                 "active": {
-                    "type": "object",
-                    "properties": {
-                        "live": {
-                            "type": "boolean"
-                        },
-                        "backtest": {
-                            "type": "boolean"
-                        }
-                    },
-                    "required": [
-                        "live",
-                        "backtest"
-                    ],
-                    "additionalProperties": false
+                    "type": "boolean"
                 },
                 "notify": {
                     "type": "boolean"
@@ -694,12 +503,6 @@
         "IConfigBacktestOptimization": {
             "type": "object",
             "properties": {
-                "maxDrawings": {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 5000,
-                    "multipleOf": 1
-                },
                 "omitBenchmarks": {
                     "type": "boolean"
                 },
@@ -721,6 +524,197 @@
                 "standard",
                 "research",
                 "oracle"
+            ]
+        },
+        "ILiveTraderConfig": {
+            "type": "object",
+            "properties": {
+                "strategies": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "instrumentUniverse": {
+                    "$ref": "#/definitions/IConfigInstrumentUniverse"
+                },
+                "riskProfiles": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IConfigLiveRiskProfile"
+                    }
+                },
+                "strategyRiskOverrides": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IConfigLiveStrategyRiskOverride"
+                    }
+                },
+                "targetExitTolerancePerc": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "strategyTargetExitOverrides": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IConfigStrategyTargetExitOverride"
+                    }
+                },
+                "defaultMaxLossPerDay": {
+                    "$ref": "#/definitions/ICompositeValue"
+                },
+                "maxContextBars": {
+                    "type": "number"
+                },
+                "avoidRoundShareQuantities": {
+                    "type": "boolean"
+                },
+                "approachingSignals": {
+                    "$ref": "#/definitions/IConfigApproachSignals"
+                },
+                "maxDrawings": {
+                    "type": "number"
+                },
+                "live": {
+                    "$ref": "#/definitions/IConfigLiveTrading"
+                },
+                "notifications": {
+                    "type": "object",
+                    "properties": {
+                        "info": {
+                            "$ref": "#/definitions/INotificationConfig"
+                        },
+                        "error": {
+                            "$ref": "#/definitions/INotificationConfig"
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "required": [
+                "approachingSignals",
+                "defaultMaxLossPerDay",
+                "instrumentUniverse",
+                "live",
+                "maxContextBars",
+                "maxDrawings",
+                "notifications",
+                "riskProfiles",
+                "strategies",
+                "strategyRiskOverrides",
+                "strategyTargetExitOverrides",
+                "targetExitTolerancePerc"
+            ],
+            "additionalProperties": false
+        },
+        "IConfigLiveRiskProfile": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "maxRiskPercPerTrade": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "maxDrawdownPercPerDay": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "hv": {
+                    "$ref": "#/definitions/IConfigHVRule"
+                },
+                "minCapitalPerTrade": {
+                    "$ref": "#/definitions/ICompositeValue"
+                },
+                "maxCapitalPerTrade": {
+                    "$ref": "#/definitions/ICompositeValue"
+                },
+                "maxSpreadPerTrade": {
+                    "$ref": "#/definitions/ICompositeValue"
+                },
+                "maxDailyVolumeParticipationPerTrade": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "minRecentExecutionBars": {
+                    "type": "number",
+                    "minimum": 0
+                },
+                "maxExecutionBarGapFactor": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "minSignalScore": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                }
+            },
+            "required": [
+                "id",
+                "maxDrawdownPercPerDay",
+                "maxRiskPercPerTrade"
+            ]
+        },
+        "IConfigLiveStrategyRiskOverride": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "strategyProfileId": {
+                    "$ref": "#/definitions/StrategyRiskProfileId"
+                },
+                "preferredRiskProfileId": {
+                    "type": "string"
+                },
+                "maxRiskPercPerTrade": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "maxDrawdownPercPerDay": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "hv": {
+                    "$ref": "#/definitions/IConfigHVRuleOverride"
+                },
+                "minCapitalPerTrade": {
+                    "$ref": "#/definitions/ICompositeValue"
+                },
+                "maxCapitalPerTrade": {
+                    "$ref": "#/definitions/ICompositeValue"
+                },
+                "maxSpreadPerTrade": {
+                    "$ref": "#/definitions/ICompositeValue"
+                },
+                "maxDailyVolumeParticipationPerTrade": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "minRecentExecutionBars": {
+                    "type": "number",
+                    "minimum": 0
+                },
+                "maxExecutionBarGapFactor": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "minSignalScore": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                }
+            },
+            "required": [
+                "strategyProfileId"
             ]
         },
         "IConfigLiveTrading": {
