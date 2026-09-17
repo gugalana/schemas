@@ -122,6 +122,11 @@
                     "type": "string",
                     "const": "dynamic"
                 },
+                "screening": {
+                    "type": "string",
+                    "const": "stocks-in-play",
+                    "description": "Fixed daily opening-volume policy from the Stocks in Play paper."
+                },
                 "base": {
                     "$ref": "#/definitions/IInstrumentPoolDynamicBase"
                 },
