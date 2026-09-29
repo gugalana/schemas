@@ -8,11 +8,12 @@
                 "$schema": {
                     "type": "string"
                 },
+                "dataRoot": {
+                    "type": "string",
+                    "description": "Absolute archive directory selected by this configuration."
+                },
                 "trader": {
                     "$ref": "#/definitions/IBacktestTraderConfig"
-                },
-                "miner": {
-                    "$ref": "#/definitions/IConfigMiner"
                 },
                 "batchServices": {
                     "type": "object",
@@ -115,16 +116,17 @@
                         "massive",
                         "alpaca"
                     ],
-                    "additionalProperties": false
+                    "additionalProperties": false,
+                    "description": "Only providers used by the selected operation need configuration."
                 }
             },
             "required": [
-                "trader",
-                "miner",
-                "batchServices"
+                "batchServices",
+                "dataRoot",
+                "trader"
             ],
             "additionalProperties": false,
-            "description": "Desktop-owned defaults shared by local execution entry points."
+            "description": "Desktop configuration extends the common contract with its required local provider settings."
         },
         "IBacktestTraderConfig": {
             "type": "object",
@@ -723,48 +725,6 @@
                 "research",
                 "oracle"
             ]
-        },
-        "IConfigMiner": {
-            "type": "object",
-            "properties": {
-                "kinds": {
-                    "type": "object",
-                    "properties": {
-                        "intraday": {
-                            "$ref": "#/definitions/IConfigMinerKind"
-                        },
-                        "swing": {
-                            "$ref": "#/definitions/IConfigMinerKind"
-                        },
-                        "position": {
-                            "$ref": "#/definitions/IConfigMinerKind"
-                        }
-                    },
-                    "additionalProperties": false,
-                    "description": "Mining configuration by horizon kind"
-                }
-            },
-            "required": [
-                "kinds"
-            ],
-            "additionalProperties": false,
-            "description": "Miner configuration"
-        },
-        "IConfigMinerKind": {
-            "type": "object",
-            "properties": {
-                "minMovePerc": {
-                    "type": "number",
-                    "description": "Minimum absolute hindsight movement as a ratio of entry price, where 1 is 100%.",
-                    "minimum": 0,
-                    "maximum": 1
-                }
-            },
-            "required": [
-                "minMovePerc"
-            ],
-            "additionalProperties": false,
-            "description": "Mining configuration for one horizon kind"
         },
         "IConfigRateLimit": {
             "type": "object",
