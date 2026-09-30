@@ -8,9 +8,9 @@
                 "$schema": {
                     "type": "string"
                 },
-                "dataRoot": {
-                    "type": "string",
-                    "description": "Absolute archive directory selected by this configuration."
+                "directories": {
+                    "$ref": "#/definitions/IDataDirectories",
+                    "description": "Explicit absolute archive locations shared by desktop and CLI."
                 },
                 "trader": {
                     "$ref": "#/definitions/IBacktestTraderConfig"
@@ -19,7 +19,19 @@
                     "type": "object",
                     "properties": {
                         "massive": {
-                            "$ref": "#/definitions/IConfigBatchService"
+                            "type": "object",
+                            "properties": {
+                                "rateLimit": {
+                                    "$ref": "#/definitions/IConfigRateLimit"
+                                },
+                                "flatFiles": {
+                                    "$ref": "#/definitions/IConfigMassiveFlatFiles"
+                                }
+                            },
+                            "required": [
+                                "flatFiles"
+                            ],
+                            "additionalProperties": false
                         },
                         "alpaca": {
                             "type": "object",
@@ -28,19 +40,55 @@
                                     "$ref": "#/definitions/IConfigRateLimit"
                                 }
                             },
+                            "required": [
+                                "rateLimit"
+                            ],
                             "additionalProperties": false
                         }
                     },
-                    "additionalProperties": false,
-                    "description": "Only providers used by the selected operation need configuration."
+                    "required": [
+                        "massive",
+                        "alpaca"
+                    ],
+                    "additionalProperties": false
                 }
             },
             "required": [
-                "dataRoot",
-                "trader"
+                "directories",
+                "trader",
+                "batchServices"
             ],
             "additionalProperties": false,
             "description": "Shared local configuration used by the CLI and inherited by the desktop."
+        },
+        "IDataDirectories": {
+            "type": "object",
+            "properties": {
+                "accounts": {
+                    "type": "string"
+                },
+                "reference": {
+                    "type": "string"
+                },
+                "market": {
+                    "type": "string"
+                },
+                "journals": {
+                    "type": "string"
+                },
+                "operations": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "accounts",
+                "reference",
+                "market",
+                "journals",
+                "operations"
+            ],
+            "additionalProperties": false,
+            "description": "Independently located archives; only reference storage may be shared with a server."
         },
         "IBacktestTraderConfig": {
             "type": "object",
@@ -639,21 +687,6 @@
                 "research",
                 "oracle"
             ]
-        },
-        "IConfigBatchService": {
-            "type": "object",
-            "properties": {
-                "rateLimit": {
-                    "$ref": "#/definitions/IConfigRateLimit",
-                    "description": "Rate limit configuration"
-                },
-                "flatFiles": {
-                    "$ref": "#/definitions/IConfigMassiveFlatFiles",
-                    "description": "Massive S3 flat-file import policy. Ignored by services that do not expose this dataset."
-                }
-            },
-            "additionalProperties": false,
-            "description": "Third-party batch service configuration"
         },
         "IConfigRateLimit": {
             "type": "object",

@@ -8,9 +8,9 @@
                 "$schema": {
                     "type": "string"
                 },
-                "dataRoot": {
-                    "type": "string",
-                    "description": "Absolute process-local storage root. Never part of a frozen trader configuration."
+                "directories": {
+                    "$ref": "#/definitions/IDataDirectories",
+                    "description": "Explicit absolute locations for independently owned archives."
                 },
                 "collector": {
                     "$ref": "#/definitions/IConfigCollector",
@@ -41,12 +41,41 @@
                 }
             },
             "required": [
-                "dataRoot",
+                "directories",
                 "collector",
                 "trader"
             ],
             "additionalProperties": false,
             "description": "Main configuration"
+        },
+        "IDataDirectories": {
+            "type": "object",
+            "properties": {
+                "accounts": {
+                    "type": "string"
+                },
+                "reference": {
+                    "type": "string"
+                },
+                "market": {
+                    "type": "string"
+                },
+                "journals": {
+                    "type": "string"
+                },
+                "operations": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "accounts",
+                "reference",
+                "market",
+                "journals",
+                "operations"
+            ],
+            "additionalProperties": false,
+            "description": "Independently located archives; only reference storage may be shared with a server."
         },
         "IConfigCollector": {
             "type": "object",
