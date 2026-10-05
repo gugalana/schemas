@@ -1,0 +1,124 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/definitions/ISimBrokerCreateAccount",
+    "definitions": {
+        "ISimBrokerCreateAccount": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                },
+                "currency": {
+                    "$ref": "#/definitions/SimBrokerCurrency",
+                    "description": "Immutable account base currency; initial capital and balances use this unit."
+                },
+                "initialCapital": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "simulationProfile": {
+                    "$ref": "#/definitions/ISimBrokerServiceProfile"
+                }
+            },
+            "required": [
+                "id",
+                "currency",
+                "initialCapital",
+                "simulationProfile"
+            ],
+            "additionalProperties": false,
+            "description": "Immutable account creation terms; subsequent execution-policy changes are journaled separately."
+        },
+        "SimBrokerCurrency": {
+            "type": "string",
+            "enum": [
+                "USD",
+                "EUR",
+                "GBP",
+                "JPY",
+                "AUD"
+            ]
+        },
+        "ISimBrokerServiceProfile": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Human-readable identity retained with the complete resolved policy.",
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"
+                },
+                "slippage": {
+                    "$ref": "#/definitions/ICompositeDynamicValue"
+                },
+                "randomness": {
+                    "type": "number",
+                    "description": "Probability that an ordinary order receives one injected execution scenario, not its severity.",
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "seed": {
+                    "type": "string",
+                    "description": "Stable experiment seed; account and economic order coordinates isolate deterministic draws.",
+                    "minLength": 1,
+                    "maxLength": 128
+                },
+                "spread": {
+                    "$ref": "#/definitions/ICompositeDynamicValue"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "id",
+                "randomness",
+                "seed"
+            ],
+            "description": "Standalone policy: full bar-volume capacity is engine-owned; quote-based spread is unavailable."
+        },
+        "ICompositeDynamicValue": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/ICompositeValue"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "const": "dynamic"
+                        }
+                    },
+                    "required": [
+                        "type"
+                    ],
+                    "additionalProperties": false
+                }
+            ]
+        },
+        "ICompositeValue": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "type": "number",
+                    "description": "Non-negative magnitude. With type \"perc\", this is a ratio from 0 to 1 resolved against the basis documented by the owning parameter; otherwise it uses that parameter's fixed unit.",
+                    "minimum": 0
+                },
+                "type": {
+                    "$ref": "#/definitions/IValueKind",
+                    "description": "Value interpretation: \"fixed\" uses the owning parameter's unit and \"perc\" uses its documented basis. Defaults to \"fixed\"."
+                }
+            },
+            "required": [
+                "value"
+            ],
+            "additionalProperties": false
+        },
+        "IValueKind": {
+            "type": "string",
+            "enum": [
+                "fixed",
+                "perc"
+            ]
+        }
+    }
+}

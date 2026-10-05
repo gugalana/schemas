@@ -1,0 +1,154 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/definitions/ISimBrokerOrderRequest",
+    "definitions": {
+        "ISimBrokerOrderRequest": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "number",
+                    "description": "Economic decision time supplied by the client; never a future observation."
+                },
+                "id": {
+                    "type": "string"
+                },
+                "positionId": {
+                    "type": "string"
+                },
+                "strategyId": {
+                    "type": "string"
+                },
+                "signalId": {
+                    "type": "string"
+                },
+                "tradeSymbol": {
+                    "type": "string"
+                },
+                "side": {
+                    "$ref": "#/definitions/OrderSide"
+                },
+                "intent": {
+                    "$ref": "#/definitions/OrderIntent"
+                },
+                "orderType": {
+                    "$ref": "#/definitions/OrderType"
+                },
+                "timeInForce": {
+                    "$ref": "#/definitions/OrderTimeInForce"
+                },
+                "size": {
+                    "type": "number"
+                },
+                "emitPrice": {
+                    "type": "number"
+                },
+                "limitPrice": {
+                    "type": "number"
+                },
+                "stopPrice": {
+                    "type": "number"
+                },
+                "riskMeta": {
+                    "$ref": "#/definitions/ISignalRiskMeta",
+                    "description": "Optional risk metadata extracted from the originating signal"
+                },
+                "extendedHours": {
+                    "type": "boolean"
+                },
+                "oco": {
+                    "type": "boolean"
+                },
+                "ocoGroup": {
+                    "type": "string"
+                },
+                "takeProfit": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "createdAt",
+                "id",
+                "positionId",
+                "strategyId",
+                "signalId",
+                "tradeSymbol",
+                "side",
+                "intent",
+                "orderType",
+                "timeInForce",
+                "size",
+                "emitPrice"
+            ],
+            "additionalProperties": false,
+            "description": "Broker request identity is idempotent within one account, independent of transport retries."
+        },
+        "OrderSide": {
+            "type": "number",
+            "enum": [
+                1,
+                -1
+            ],
+            "description": "Logical side of the trade from the strategy viewpoint. How this maps to BUY/SELL depends on the instrument type. IMPORTANT: do NOT change these values as they are used in calculations!"
+        },
+        "OrderIntent": {
+            "type": "number",
+            "enum": [
+                1,
+                -1
+            ]
+        },
+        "OrderType": {
+            "type": "number",
+            "enum": [
+                0,
+                1,
+                2,
+                3
+            ]
+        },
+        "OrderTimeInForce": {
+            "type": "string",
+            "enum": [
+                "DAY",
+                "GTC",
+                "IOC",
+                "FOK"
+            ],
+            "description": "Time-in-force abstraction. Not all brokers will support all values."
+        },
+        "ISignalRiskMeta": {
+            "type": "object",
+            "properties": {
+                "riskProfileId": {
+                    "type": "string"
+                },
+                "atr": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "dailyAtr": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "dailyHv": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "riskProfileId",
+                "atr",
+                "dailyAtr",
+                "dailyHv"
+            ],
+            "additionalProperties": false,
+            "description": "Optional risk metadata attached to signals and orders"
+        }
+    }
+}

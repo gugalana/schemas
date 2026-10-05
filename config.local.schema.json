@@ -44,6 +44,10 @@
                                 "rateLimit"
                             ],
                             "additionalProperties": false
+                        },
+                        "databento": {
+                            "$ref": "#/definitions/IConfigDatabento",
+                            "description": "Scheduled local futures CSV import. Configure its calendar in Scheduling."
                         }
                     },
                     "required": [
@@ -153,6 +157,9 @@
                 },
                 "backtest": {
                     "$ref": "#/definitions/IConfigBacktest"
+                },
+                "simulationProfile": {
+                    "$ref": "#/definitions/ISimBrokerProfile"
                 }
             },
             "required": [
@@ -163,6 +170,7 @@
                 "maxContextBars",
                 "maxDrawings",
                 "riskProfiles",
+                "simulationProfile",
                 "strategies",
                 "strategyRiskOverrides",
                 "strategyTargetExitOverrides",
@@ -567,18 +575,6 @@
                     "format": "date-time",
                     "description": "End date; if missing, run up to current date"
                 },
-                "spread": {
-                    "$ref": "#/definitions/IBacktestSpreadValue",
-                    "description": "Simulated or observed spread policy used by historical execution"
-                },
-                "slippage": {
-                    "$ref": "#/definitions/ICompositeDynamicValue",
-                    "description": "Simulated slippage per trade"
-                },
-                "executionBarVolumeParticipation": {
-                    "type": "number",
-                    "description": "Maximum share of the complete current raw execution bar volume exposed from its opening phase by the intentional ex-post fill model"
-                },
                 "optimization": {
                     "$ref": "#/definitions/IConfigBacktestOptimization",
                     "description": "Optional optimization mode. These flags preserve strategy-account behavior while omitting selected diagnostics, curves, or independent benchmark accounting to improve throughput."
@@ -598,11 +594,83 @@
             },
             "required": [
                 "useStrategyScores",
-                "executionBarVolumeParticipation",
                 "initialCapital"
             ],
             "additionalProperties": false,
             "description": "Backtest configuration"
+        },
+        "IConfigBacktestOptimization": {
+            "type": "object",
+            "properties": {
+                "omitBenchmarks": {
+                    "type": "boolean",
+                    "description": "Omit account benchmark lanes and their persisted artifacts during the run"
+                },
+                "omitSignals": {
+                    "type": "boolean",
+                    "description": "Omit signals table rows during the run"
+                },
+                "omitNotifications": {
+                    "type": "boolean",
+                    "description": "Omit notification log entries during the run"
+                },
+                "omitEquityCurve": {
+                    "type": "boolean",
+                    "description": "Omit intermediate equity snapshots during the run"
+                }
+            },
+            "additionalProperties": false,
+            "description": "Optimization configuration"
+        },
+        "JournalKind": {
+            "type": "string",
+            "enum": [
+                "standard",
+                "research",
+                "oracle"
+            ]
+        },
+        "ISimBrokerProfile": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Human-readable identity retained with the complete resolved policy.",
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"
+                },
+                "spread": {
+                    "$ref": "#/definitions/IBacktestSpreadValue"
+                },
+                "slippage": {
+                    "$ref": "#/definitions/ICompositeDynamicValue"
+                },
+                "executionBarVolumeParticipation": {
+                    "type": "number",
+                    "description": "Fraction of complete raw bar volume available to the existing ex-post execution model.",
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "randomness": {
+                    "type": "number",
+                    "description": "Probability that an ordinary order receives one injected execution scenario, not its severity.",
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "seed": {
+                    "type": "string",
+                    "description": "Stable experiment seed; account and economic order coordinates isolate deterministic draws.",
+                    "minLength": 1,
+                    "maxLength": 128
+                }
+            },
+            "required": [
+                "id",
+                "executionBarVolumeParticipation",
+                "randomness",
+                "seed"
+            ],
+            "additionalProperties": false,
+            "description": "Effective execution policy shared by historical replay and the external paper broker."
         },
         "IBacktestSpreadValue": {
             "anyOf": [
@@ -656,37 +724,6 @@
                 "maximumAgeMs"
             ],
             "additionalProperties": false
-        },
-        "IConfigBacktestOptimization": {
-            "type": "object",
-            "properties": {
-                "omitBenchmarks": {
-                    "type": "boolean",
-                    "description": "Omit account benchmark lanes and their persisted artifacts during the run"
-                },
-                "omitSignals": {
-                    "type": "boolean",
-                    "description": "Omit signals table rows during the run"
-                },
-                "omitNotifications": {
-                    "type": "boolean",
-                    "description": "Omit notification log entries during the run"
-                },
-                "omitEquityCurve": {
-                    "type": "boolean",
-                    "description": "Omit intermediate equity snapshots during the run"
-                }
-            },
-            "additionalProperties": false,
-            "description": "Optimization configuration"
-        },
-        "JournalKind": {
-            "type": "string",
-            "enum": [
-                "standard",
-                "research",
-                "oracle"
-            ]
         },
         "IConfigRateLimit": {
             "type": "object",
@@ -748,7 +785,7 @@
                 },
                 "universe": {
                     "$ref": "#/definitions/IConfigMassiveFlatFileUniverse",
-                    "description": "Optional symbol scope. Omit both lists to retain every source ticker."
+                    "description": "Instruments included in the processed market data. Raw files remain complete. Leave both lists empty to import all instruments."
                 }
             },
             "required": [
@@ -777,6 +814,17 @@
             },
             "additionalProperties": false,
             "description": "Symbol scope applied before a Massive flat file becomes a local aggregate."
+        },
+        "IConfigDatabento": {
+            "type": "object",
+            "properties": {
+                "sourceDirectory": {
+                    "type": "string",
+                    "description": "Folder scanned recursively for CSV files. Keep previously imported CSVs here: changed batches must preserve existing prices. Unchanged folders are skipped. Source files are never moved or deleted."
+                }
+            },
+            "additionalProperties": false,
+            "description": "Import local CSV files at the times configured in Desktop & CLI Scheduling."
         }
     }
 }

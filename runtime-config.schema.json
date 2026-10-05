@@ -64,6 +64,9 @@
                 },
                 "backtest": {
                     "$ref": "#/definitions/IConfigBacktest"
+                },
+                "simulationProfile": {
+                    "$ref": "#/definitions/ISimBrokerProfile"
                 }
             },
             "required": [
@@ -74,6 +77,7 @@
                 "maxContextBars",
                 "maxDrawings",
                 "riskProfiles",
+                "simulationProfile",
                 "strategies",
                 "strategyRiskOverrides",
                 "strategyTargetExitOverrides",
@@ -420,15 +424,6 @@
                     "type": "string",
                     "format": "date-time"
                 },
-                "spread": {
-                    "$ref": "#/definitions/IBacktestSpreadValue"
-                },
-                "slippage": {
-                    "$ref": "#/definitions/ICompositeDynamicValue"
-                },
-                "executionBarVolumeParticipation": {
-                    "type": "number"
-                },
                 "optimization": {
                     "$ref": "#/definitions/IConfigBacktestOptimization"
                 },
@@ -444,8 +439,70 @@
             },
             "required": [
                 "useStrategyScores",
-                "executionBarVolumeParticipation",
                 "initialCapital"
+            ],
+            "additionalProperties": false
+        },
+        "IConfigBacktestOptimization": {
+            "type": "object",
+            "properties": {
+                "omitBenchmarks": {
+                    "type": "boolean"
+                },
+                "omitSignals": {
+                    "type": "boolean"
+                },
+                "omitNotifications": {
+                    "type": "boolean"
+                },
+                "omitEquityCurve": {
+                    "type": "boolean"
+                }
+            },
+            "additionalProperties": false
+        },
+        "JournalKind": {
+            "type": "string",
+            "enum": [
+                "standard",
+                "research",
+                "oracle"
+            ]
+        },
+        "ISimBrokerProfile": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"
+                },
+                "spread": {
+                    "$ref": "#/definitions/IBacktestSpreadValue"
+                },
+                "slippage": {
+                    "$ref": "#/definitions/ICompositeDynamicValue"
+                },
+                "executionBarVolumeParticipation": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "randomness": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "seed": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                }
+            },
+            "required": [
+                "id",
+                "executionBarVolumeParticipation",
+                "randomness",
+                "seed"
             ],
             "additionalProperties": false
         },
@@ -499,32 +556,6 @@
                 "maximumAgeMs"
             ],
             "additionalProperties": false
-        },
-        "IConfigBacktestOptimization": {
-            "type": "object",
-            "properties": {
-                "omitBenchmarks": {
-                    "type": "boolean"
-                },
-                "omitSignals": {
-                    "type": "boolean"
-                },
-                "omitNotifications": {
-                    "type": "boolean"
-                },
-                "omitEquityCurve": {
-                    "type": "boolean"
-                }
-            },
-            "additionalProperties": false
-        },
-        "JournalKind": {
-            "type": "string",
-            "enum": [
-                "standard",
-                "research",
-                "oracle"
-            ]
         },
         "ILiveTraderConfig": {
             "type": "object",

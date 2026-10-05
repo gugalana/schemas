@@ -299,11 +299,11 @@
                 },
                 "gatewayHost": {
                     "type": "string",
-                    "description": "Loopback address used by the Interactive Brokers Gateway socket"
+                    "description": "Loopback address used by the Interactive Brokers Gateway or external SimBroker"
                 },
                 "gatewayPort": {
                     "type": "number",
-                    "description": "Host port mapped to the Interactive Brokers Paper Gateway socket"
+                    "description": "Host port mapped to the Paper Gateway socket or SimBroker HTTP service"
                 },
                 "clientId": {
                     "type": "number",

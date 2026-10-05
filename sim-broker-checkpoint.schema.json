@@ -1,0 +1,1660 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/definitions/ISimBrokerAccountCheckpoint",
+    "definitions": {
+        "ISimBrokerAccountCheckpoint": {
+            "type": "object",
+            "properties": {
+                "broker": {
+                    "$ref": "#/definitions/ISimBrokerCheckpoint"
+                },
+                "context": {
+                    "$ref": "#/definitions/ILiveTradingContextCheckpoint"
+                },
+                "quotes": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "minItems": 2,
+                        "items": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "$ref": "#/definitions/IQuoteLiquidityBar"
+                            }
+                        ],
+                        "maxItems": 2
+                    }
+                },
+                "sequence": {
+                    "type": "number"
+                },
+                "riskDay": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "calendarDay": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "sessions": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "minItems": 2,
+                        "maxItems": 2
+                    }
+                }
+            },
+            "required": [
+                "broker",
+                "context",
+                "quotes",
+                "sequence",
+                "riskDay",
+                "calendarDay",
+                "sessions"
+            ],
+            "additionalProperties": false,
+            "description": "The account journal and all non-derived broker state commit together."
+        },
+        "ISimBrokerCheckpoint": {
+            "type": "object",
+            "properties": {
+                "state": {
+                    "$ref": "#/definitions/IBrokerState"
+                },
+                "actions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IAppliedCorporateAction"
+                    }
+                },
+                "distributions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ICorporateActionDistribution"
+                    }
+                },
+                "execution": {
+                    "$ref": "#/definitions/ISimBrokerExecutionCheckpoint"
+                },
+                "taxReserveCash": {
+                    "type": "number"
+                },
+                "activeSessions": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "minItems": 2,
+                        "maxItems": 2
+                    }
+                },
+                "sessionEnds": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "minItems": 2,
+                        "items": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "number"
+                            }
+                        ],
+                        "maxItems": 2
+                    }
+                },
+                "scenarioBarFills": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "minItems": 2,
+                        "items": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "time": {
+                                        "type": "number"
+                                    },
+                                    "size": {
+                                        "type": "number"
+                                    }
+                                },
+                                "required": [
+                                    "time",
+                                    "size"
+                                ],
+                                "additionalProperties": false
+                            }
+                        ],
+                        "maxItems": 2
+                    }
+                }
+            },
+            "required": [
+                "state",
+                "actions",
+                "distributions",
+                "execution",
+                "taxReserveCash",
+                "activeSessions",
+                "sessionEnds",
+                "scenarioBarFills"
+            ],
+            "additionalProperties": false,
+            "description": "Complete broker state captured only between causal market slices."
+        },
+        "IBrokerState": {
+            "type": "object",
+            "properties": {
+                "lastSync": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "isConnected": {
+                    "type": "boolean"
+                },
+                "brokerAccountStatus": {
+                    "$ref": "#/definitions/BrokerAccountStatus"
+                },
+                "accountEquity": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "cash": {
+                    "type": "number"
+                },
+                "accruedFees": {
+                    "type": "number"
+                },
+                "accruedSpread": {
+                    "type": "number"
+                },
+                "accruedSlippage": {
+                    "type": "number"
+                },
+                "buyingPower": {
+                    "type": "number"
+                },
+                "positionUnrealizedPnl": {
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "description": "Broker-authoritative aggregate unrealized position PnL in account currency."
+                },
+                "dailyPnl": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/IBrokerAccountPnl"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Account-wide Daily PnL and its coverage, owned exclusively by the live broker adapter."
+                },
+                "positions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IBrokerPositionSnapshot"
+                    },
+                    "description": "Complete validated current broker-netted positions."
+                },
+                "cancelableOrderIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Pending Gu order ids whose current broker session exposes a complete cancellation handle."
+                },
+                "unattributedPendingOrders": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IBrokerPendingOrderSnapshot"
+                    },
+                    "description": "Active broker orders that cannot be attributed to a current Gu order."
+                },
+                "unattributedPendingOrderSymbols": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Symbols with active broker orders that cannot be attributed to a current Gu order."
+                },
+                "entryBlockedSymbols": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Symbols whose broker exposure is known but whose exact execution contract is temporarily unresolved."
+                },
+                "orders": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IOrder"
+                    }
+                }
+            },
+            "required": [
+                "lastSync",
+                "isConnected",
+                "brokerAccountStatus",
+                "accountEquity",
+                "cash",
+                "accruedFees",
+                "accruedSpread",
+                "accruedSlippage",
+                "buyingPower",
+                "positionUnrealizedPnl",
+                "dailyPnl",
+                "positions",
+                "cancelableOrderIds",
+                "unattributedPendingOrders",
+                "unattributedPendingOrderSymbols",
+                "entryBlockedSymbols",
+                "orders"
+            ],
+            "additionalProperties": false
+        },
+        "BrokerAccountStatus": {
+            "type": "number",
+            "enum": [
+                0,
+                1,
+                2,
+                4,
+                5
+            ]
+        },
+        "IBrokerAccountPnl": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "dayStart": {
+                    "type": "number"
+                },
+                "dayEnd": {
+                    "type": "number"
+                },
+                "observedAt": {
+                    "type": "number"
+                },
+                "source": {
+                    "type": "string",
+                    "enum": [
+                        "alpaca-account-history",
+                        "ibkr-account-pnl",
+                        "sim-broker-account"
+                    ]
+                },
+                "unavailableReason": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "enum": [
+                        "broker-unavailable",
+                        "invalid-evidence",
+                        null
+                    ]
+                },
+                "openingEquity": {
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "description": "Broker baseline, or broker equity less native PnL when no baseline is exposed."
+                },
+                "history": {
+                    "anyOf": [
+                        {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/ILiveAccountPnlPoint"
+                            }
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Available chronological broker points; missing history never invalidates the current scalar."
+                }
+            },
+            "required": [
+                "amount",
+                "currency",
+                "dayEnd",
+                "dayStart",
+                "history",
+                "observedAt",
+                "openingEquity",
+                "source",
+                "unavailableReason"
+            ],
+            "additionalProperties": false,
+            "description": "Native account result with an optional broker-observed path for daily risk extrema."
+        },
+        "ILiveAccountPnlPoint": {
+            "type": "object",
+            "properties": {
+                "observedAt": {
+                    "type": "number"
+                },
+                "amount": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "observedAt",
+                "amount"
+            ],
+            "additionalProperties": false,
+            "description": "One broker-sourced point on the same account-wide daily trading path."
+        },
+        "IBrokerPositionSnapshot": {
+            "type": "object",
+            "properties": {
+                "openedAt": {
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "description": "Proven start of current net exposure; unavailable when execution coverage is insufficient."
+                },
+                "averageEntryPrice": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "currentPrice": {
+                    "type": "number"
+                },
+                "netSize": {
+                    "type": "number",
+                    "description": "Signed broker net quantity: positive long, negative short."
+                },
+                "observedAt": {
+                    "type": "number"
+                },
+                "tradeSymbol": {
+                    "type": "string"
+                },
+                "unrealizedPnl": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "openedAt",
+                "averageEntryPrice",
+                "currency",
+                "currentPrice",
+                "netSize",
+                "observedAt",
+                "tradeSymbol",
+                "unrealizedPnl"
+            ],
+            "additionalProperties": false,
+            "description": "Validated broker-authoritative net position for one execution symbol."
+        },
+        "IBrokerPendingOrderSnapshot": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Stable account-scoped opaque identity safe for owner controls."
+                },
+                "brokerOrderId": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "Stable provider identity when the broker has acknowledged one."
+                },
+                "cancelable": {
+                    "type": "boolean",
+                    "description": "Whether the current broker session exposes every identity required to cancel this order."
+                },
+                "filledSize": {
+                    "type": "number"
+                },
+                "observedAt": {
+                    "type": "number"
+                },
+                "orderType": {
+                    "type": "string"
+                },
+                "remainingSize": {
+                    "type": "number"
+                },
+                "side": {
+                    "type": "string",
+                    "enum": [
+                        "buy",
+                        "sell"
+                    ]
+                },
+                "size": {
+                    "type": "number"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "timeInForce": {
+                    "type": "string"
+                },
+                "tradeSymbol": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "id",
+                "brokerOrderId",
+                "cancelable",
+                "filledSize",
+                "observedAt",
+                "orderType",
+                "remainingSize",
+                "side",
+                "size",
+                "status",
+                "timeInForce",
+                "tradeSymbol"
+            ],
+            "additionalProperties": false,
+            "description": "Active broker order that cannot be coherently attributed to one current Gu order."
+        },
+        "IOrder": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Internal order id. Always present and unique inside the account."
+                },
+                "signalId": {
+                    "type": "string",
+                    "description": "Internal unique id of the signal (for logging and correlation)"
+                },
+                "brokerOrderId": {
+                    "type": "string",
+                    "description": "Broker order id as returned by the broker. May be undefined for backtests or before acceptance."
+                },
+                "observedBrokerOrderId": {
+                    "type": "string",
+                    "description": "Retained remote broker evidence on immutable legacy broker-truth journal rows."
+                },
+                "positionId": {
+                    "type": "string",
+                    "description": "Associated position id. This value is assigned when the order is created and never changes afterwards."
+                },
+                "strategyId": {
+                    "type": "string",
+                    "description": "Strategy Id (unique strategy identifier)"
+                },
+                "tradeSymbol": {
+                    "type": "string",
+                    "description": "Tradable symbol to send to the broker"
+                },
+                "side": {
+                    "$ref": "#/definitions/OrderSide",
+                    "description": "Long or short?"
+                },
+                "orderType": {
+                    "$ref": "#/definitions/OrderType",
+                    "description": "Requested order type"
+                },
+                "intent": {
+                    "$ref": "#/definitions/OrderIntent",
+                    "description": "Order intent: open a new position or close an existing one"
+                },
+                "currency": {
+                    "type": "string",
+                    "description": "Order currency"
+                },
+                "size": {
+                    "type": "number",
+                    "description": "Order size in units (shares, contracts, etc.). This is the requested size by Gu, not necessarily filled yet."
+                },
+                "emitPrice": {
+                    "type": "number",
+                    "description": "Price snapshot when the order was created, this is used for logging and backtesting"
+                },
+                "limitPrice": {
+                    "type": "number",
+                    "description": "Limit price for limit orders"
+                },
+                "stopPrice": {
+                    "type": "number",
+                    "description": "Stop price for stop and stop-limit orders"
+                },
+                "takeProfit": {
+                    "type": "number",
+                    "description": "Logical take profit level suggested by the strategy. This is a *position-level* target, not necessarily a broker order."
+                },
+                "stopLoss": {
+                    "type": "number",
+                    "description": "Logical stop loss level suggested by the strategy. This is a *position-level* protection, not necessarily a broker order."
+                },
+                "trailingStop": {
+                    "$ref": "#/definitions/ICompositeValue",
+                    "description": "Logical trailing stop level (if used)"
+                },
+                "status": {
+                    "$ref": "#/definitions/OrderStatus",
+                    "description": "Current order status - DO NOT CHANGE DIRECTLY"
+                },
+                "timeInForce": {
+                    "$ref": "#/definitions/OrderTimeInForce",
+                    "description": "Broker lifecycle policy for this order"
+                },
+                "extendedHours": {
+                    "type": "boolean",
+                    "description": "Submit this order during the broker's supported extended-hours session."
+                },
+                "ocoGroup": {
+                    "type": "string",
+                    "description": "One-cancels-others group id"
+                },
+                "oco": {
+                    "type": "boolean",
+                    "description": "One-cancels-others flag.  Are all orders in the group to be canceled when one is filled?"
+                },
+                "createdAt": {
+                    "type": "number",
+                    "description": "Timestamp when the order was created (epoch UTC)"
+                },
+                "createdSequence": {
+                    "type": "number",
+                    "description": "Account-local causal sequence assigned when the order was created"
+                },
+                "updatedAt": {
+                    "type": "number",
+                    "description": "Timestamp when the order was last updated (epoch UTC)"
+                },
+                "statusReason": {
+                    "type": "string",
+                    "description": "Exact broker-authored terminal reason for a rejected or canceled order"
+                },
+                "fills": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IOrderFillMeta"
+                    },
+                    "description": "All fills associated with this order. Empty or undefined means no fills yet."
+                },
+                "filledSize": {
+                    "type": "number",
+                    "description": "Total filled size (sum of all fills.size). 0 when no fills, equals \"size\" when fully filled."
+                },
+                "avgFillPrice": {
+                    "type": "number",
+                    "description": "Average fill price. Undefined if there are no fills yet."
+                },
+                "totalFees": {
+                    "type": "number",
+                    "description": "Total fees paid for this order (sum of fills.fees). Undefined if not available or not filled."
+                },
+                "score": {
+                    "type": "number",
+                    "description": "A custom score assigned to this order by the Risk Manager."
+                },
+                "meta": {
+                    "type": "object",
+                    "description": "Additional information for debugging or analytics"
+                },
+                "riskMeta": {
+                    "$ref": "#/definitions/ISignalRiskMeta",
+                    "description": "Optional risk metadata extracted from the originating signal"
+                }
+            },
+            "required": [
+                "id",
+                "signalId",
+                "positionId",
+                "strategyId",
+                "tradeSymbol",
+                "side",
+                "orderType",
+                "intent",
+                "currency",
+                "size",
+                "emitPrice",
+                "status",
+                "timeInForce",
+                "createdAt",
+                "createdSequence",
+                "score"
+            ],
+            "additionalProperties": false,
+            "description": "Concrete order object created from an execute/stop signal and sent to a broker or simulated in backtests."
+        },
+        "OrderSide": {
+            "type": "number",
+            "enum": [
+                1,
+                -1
+            ],
+            "description": "Logical side of the trade from the strategy viewpoint. How this maps to BUY/SELL depends on the instrument type. IMPORTANT: do NOT change these values as they are used in calculations!"
+        },
+        "OrderType": {
+            "type": "number",
+            "enum": [
+                0,
+                1,
+                2,
+                3
+            ]
+        },
+        "OrderIntent": {
+            "type": "number",
+            "enum": [
+                1,
+                -1
+            ]
+        },
+        "ICompositeValue": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "type": "number",
+                    "description": "Non-negative magnitude. With type \"perc\", this is a ratio from 0 to 1 resolved against the basis documented by the owning parameter; otherwise it uses that parameter's fixed unit.",
+                    "minimum": 0
+                },
+                "type": {
+                    "$ref": "#/definitions/IValueKind",
+                    "description": "Value interpretation: \"fixed\" uses the owning parameter's unit and \"perc\" uses its documented basis. Defaults to \"fixed\"."
+                }
+            },
+            "required": [
+                "value"
+            ],
+            "additionalProperties": false
+        },
+        "IValueKind": {
+            "type": "string",
+            "enum": [
+                "fixed",
+                "perc"
+            ]
+        },
+        "OrderStatus": {
+            "type": "number",
+            "enum": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+            ],
+            "description": "Order status (not broker-native, this is normalized)."
+        },
+        "OrderTimeInForce": {
+            "type": "string",
+            "enum": [
+                "DAY",
+                "GTC",
+                "IOC",
+                "FOK"
+            ],
+            "description": "Time-in-force abstraction. Not all brokers will support all values."
+        },
+        "IOrderFillMeta": {
+            "type": "object",
+            "properties": {
+                "price": {
+                    "type": "number",
+                    "description": "Fill price for this individual fill"
+                },
+                "size": {
+                    "type": "number",
+                    "description": "Filled size for this individual fill"
+                },
+                "time": {
+                    "type": "number",
+                    "description": "Time when this fill occurred (epoch UTC)"
+                },
+                "sequence": {
+                    "type": "number",
+                    "description": "Monotonic account-local sequence used to order trading events sharing one timestamp"
+                },
+                "localPrice": {
+                    "type": "number",
+                    "description": "Fill price converted to local account currency (price * exchange rate)"
+                },
+                "fxRate": {
+                    "type": "number",
+                    "description": "Exact broker-owned conversion rate applied to this fill."
+                },
+                "fxObservationFingerprint": {
+                    "type": "string",
+                    "description": "Frozen observation identity proving the conversion used by this fill."
+                },
+                "fees": {
+                    "type": "number",
+                    "description": "Fees paid for this specific fill in local account currency"
+                },
+                "spread": {
+                    "type": "number",
+                    "description": "Spread cost paid for this specific fill in local account currency"
+                },
+                "slippage": {
+                    "type": "number",
+                    "description": "Slippage cost paid for this specific fill in local account currency"
+                },
+                "allocatedCapital": {
+                    "type": "number",
+                    "description": "Effective capital allocated by this fill in account currency. For cash instruments this is typically cash plus fees. For margined instruments this is typically initial margin plus fees."
+                }
+            },
+            "required": [
+                "price",
+                "size",
+                "time",
+                "sequence",
+                "localPrice",
+                "fxRate",
+                "fxObservationFingerprint",
+                "fees"
+            ],
+            "additionalProperties": false,
+            "description": "Single fill event for an order. An order can be filled in multiple chunks."
+        },
+        "ISignalRiskMeta": {
+            "type": "object",
+            "properties": {
+                "riskProfileId": {
+                    "type": "string"
+                },
+                "atr": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "dailyAtr": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "dailyHv": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "riskProfileId",
+                "atr",
+                "dailyAtr",
+                "dailyHv"
+            ],
+            "additionalProperties": false,
+            "description": "Optional risk metadata attached to signals and orders"
+        },
+        "IAppliedCorporateAction": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/IAppliedStockSplitCorporateAction"
+                },
+                {
+                    "$ref": "#/definitions/IAppliedSpinOffCorporateAction"
+                }
+            ]
+        },
+        "IAppliedStockSplitCorporateAction": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Stable content-derived action identity."
+                },
+                "sourceIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Source row identifiers collapsed into this economic event."
+                },
+                "kind": {
+                    "type": "string",
+                    "const": "stockSplit"
+                },
+                "symbol": {
+                    "type": "string"
+                },
+                "providerSymbol": {
+                    "type": "string",
+                    "description": "Exact provider ticker retained separately from the immutable instrument ID."
+                },
+                "market": {
+                    "$ref": "#/definitions/MarketRegion",
+                    "description": "Frozen market session used to derive the causal barrier timestamp."
+                },
+                "sessionProfileId": {
+                    "type": "string",
+                    "description": "Frozen instrument-session profile owning the action date boundary."
+                },
+                "effectiveAt": {
+                    "type": "number",
+                    "description": "First instant at which the action is observable by the engine."
+                },
+                "executionDate": {
+                    "type": "string",
+                    "description": "Canonical exchange-local execution date in YYYY-MM-DD form."
+                },
+                "splitFrom": {
+                    "type": "number"
+                },
+                "splitTo": {
+                    "type": "number"
+                },
+                "quantityScale": {
+                    "type": "number",
+                    "description": "Raw shares after the event divided by raw shares before the event."
+                },
+                "snapshotId": {
+                    "type": "string"
+                },
+                "appliedAt": {
+                    "type": "number"
+                },
+                "appliedSequence": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "appliedAt",
+                "appliedSequence",
+                "effectiveAt",
+                "executionDate",
+                "id",
+                "kind",
+                "market",
+                "providerSymbol",
+                "quantityScale",
+                "sessionProfileId",
+                "snapshotId",
+                "sourceIds",
+                "splitFrom",
+                "splitTo",
+                "symbol"
+            ],
+            "additionalProperties": false,
+            "description": "Applied stock split persisted after the same causal barrier as its portfolio mutations."
+        },
+        "MarketRegion": {
+            "type": "string",
+            "enum": [
+                "jp",
+                "gb",
+                "us",
+                "au"
+            ]
+        },
+        "IAppliedSpinOffCorporateAction": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Stable content-derived action identity."
+                },
+                "sourceIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Source row identifiers collapsed into this economic event."
+                },
+                "kind": {
+                    "type": "string",
+                    "const": "spinOff"
+                },
+                "symbol": {
+                    "type": "string"
+                },
+                "providerSymbol": {
+                    "type": "string",
+                    "description": "Exact provider ticker retained separately from the immutable instrument ID."
+                },
+                "market": {
+                    "$ref": "#/definitions/MarketRegion",
+                    "description": "Frozen market session used to derive the causal barrier timestamp."
+                },
+                "sessionProfileId": {
+                    "type": "string",
+                    "description": "Frozen instrument-session profile owning the action date boundary."
+                },
+                "effectiveAt": {
+                    "type": "number",
+                    "description": "First instant at which the action is observable by the engine."
+                },
+                "executionDate": {
+                    "type": "string",
+                    "description": "Canonical exchange-local execution date in YYYY-MM-DD form."
+                },
+                "recordDate": {
+                    "type": "string",
+                    "description": "Record date used by the issuer to determine distribution entitlement."
+                },
+                "entitlementPolicy": {
+                    "type": "string",
+                    "const": "regularWayPositionImmediatelyBeforeExDistribution",
+                    "description": "Regular-way shares carry their due-bill entitlement through the ex-distribution barrier."
+                },
+                "childSymbol": {
+                    "type": "string",
+                    "description": "Canonical child security distributed by the parent issuer."
+                },
+                "childProviderSymbol": {
+                    "type": "string"
+                },
+                "childSharesPerParent": {
+                    "type": "number",
+                    "description": "Child shares distributed for each pre-event parent share."
+                },
+                "parentPriceScale": {
+                    "type": "number",
+                    "description": "Scale mapping pre-event parent prices onto the post-event raw price domain."
+                },
+                "basisAllocationPolicy": {
+                    "type": "string",
+                    "const": "relativeFairValueAtFirstJointRegularOpen",
+                    "description": "Causal policy used to allocate parent basis once real joint opening marks are observable."
+                },
+                "fractionalSharePolicy": {
+                    "type": "string",
+                    "const": "cashInLieuAtFirstJointRegularOpen",
+                    "description": "Deterministic treatment required when the distribution produces child fractions."
+                },
+                "snapshotId": {
+                    "type": "string"
+                },
+                "appliedAt": {
+                    "type": "number"
+                },
+                "appliedSequence": {
+                    "type": "number"
+                },
+                "parentCostBasisFactor": {
+                    "type": "number",
+                    "description": "Frozen causal factor retaining aggregate pre-event basis on the parent security."
+                },
+                "childCostBasisFactor": {
+                    "type": "number",
+                    "description": "Frozen causal factor transferring aggregate pre-event basis to the child security."
+                },
+                "parentValuationPrice": {
+                    "type": "number",
+                    "description": "Parent execution price observed at the joint regular-opening valuation barrier."
+                },
+                "childValuationPrice": {
+                    "type": "number",
+                    "description": "Child execution price observed at the same joint regular-opening valuation barrier."
+                }
+            },
+            "required": [
+                "appliedAt",
+                "appliedSequence",
+                "basisAllocationPolicy",
+                "childCostBasisFactor",
+                "childProviderSymbol",
+                "childSharesPerParent",
+                "childSymbol",
+                "childValuationPrice",
+                "effectiveAt",
+                "entitlementPolicy",
+                "executionDate",
+                "fractionalSharePolicy",
+                "id",
+                "kind",
+                "market",
+                "parentCostBasisFactor",
+                "parentPriceScale",
+                "parentValuationPrice",
+                "providerSymbol",
+                "recordDate",
+                "sessionProfileId",
+                "snapshotId",
+                "sourceIds",
+                "symbol"
+            ],
+            "additionalProperties": false,
+            "description": "Applied spin-off persisted after the same causal barrier as its portfolio mutations."
+        },
+        "ICorporateActionDistribution": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Stable identity derived from the action and entitlement side."
+                },
+                "actionId": {
+                    "type": "string",
+                    "description": "Corporate action that created this settlement bucket."
+                },
+                "childPositionId": {
+                    "type": "string",
+                    "description": "Deterministic physical position identity reserved for whole child shares."
+                },
+                "parentSymbol": {
+                    "type": "string"
+                },
+                "childSymbol": {
+                    "type": "string"
+                },
+                "strategyId": {
+                    "type": "string",
+                    "const": "corporate-action-distribution",
+                    "description": "Engine-reserved identity of the pooled physical position."
+                },
+                "currency": {
+                    "type": "string",
+                    "description": "Child instrument and account currencies respectively."
+                },
+                "accountCurrency": {
+                    "type": "string"
+                },
+                "side": {
+                    "$ref": "#/definitions/OrderSide",
+                    "description": "Entitlement side shared by the bucket and all of its allocations."
+                },
+                "signedWholeChildSize": {
+                    "type": "number",
+                    "description": "Signed whole child shares delivered to the physical child position."
+                },
+                "signedFractionalCashInLieuSize": {
+                    "type": "number",
+                    "description": "Signed aggregate fractional child entitlement settled in cash."
+                },
+                "childAvgPrice": {
+                    "type": "number",
+                    "description": "Pooled raw and account-currency basis of the physical child position."
+                },
+                "childAvgLocalPrice": {
+                    "type": "number"
+                },
+                "cashInLieuPrice": {
+                    "type": "number",
+                    "description": "Raw and account-currency barrier prices used for fractional settlement."
+                },
+                "cashInLieuLocalPrice": {
+                    "type": "number"
+                },
+                "cashAdjustment": {
+                    "type": "number",
+                    "description": "Rounded account-currency totals produced by fractional settlement."
+                },
+                "realizedPnl": {
+                    "type": "number"
+                },
+                "allocations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ICorporateActionDistributionAllocation"
+                    },
+                    "description": "Source-lineage allocations ordered by physical source and immediate allocation identity."
+                },
+                "appliedAt": {
+                    "type": "number",
+                    "description": "Causal barrier at which the entitlement was applied."
+                },
+                "appliedSequence": {
+                    "type": "number",
+                    "description": "Account-local causal sequence of the application barrier."
+                }
+            },
+            "required": [
+                "id",
+                "actionId",
+                "childPositionId",
+                "parentSymbol",
+                "childSymbol",
+                "strategyId",
+                "currency",
+                "accountCurrency",
+                "side",
+                "signedWholeChildSize",
+                "signedFractionalCashInLieuSize",
+                "childAvgPrice",
+                "childAvgLocalPrice",
+                "cashInLieuPrice",
+                "cashInLieuLocalPrice",
+                "cashAdjustment",
+                "realizedPnl",
+                "allocations",
+                "appliedAt",
+                "appliedSequence"
+            ],
+            "additionalProperties": false,
+            "description": "Immutable account-level settlement bucket created by one spin-off and one side. A non-zero whole entitlement seeds one pooled physical child position, while allocations preserve logical strategy lineages and fractional settlement."
+        },
+        "ICorporateActionDistributionAllocation": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Stable identity derived from the action and immediate source identities."
+                },
+                "sourcePositionId": {
+                    "type": "string",
+                    "description": "Position whose shares created this entitlement."
+                },
+                "sourceAllocationId": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "Immediate beneficial allocation inside a pooled source, or null for a strategy-owned source."
+                },
+                "rootPositionId": {
+                    "type": "string",
+                    "description": "First strategy-created position in this entitlement lineage."
+                },
+                "strategyId": {
+                    "type": "string",
+                    "description": "Strategy that owns the logical source lineage."
+                },
+                "signedChildAllocationSize": {
+                    "type": "number",
+                    "description": "Signed beneficial share of the pooled whole-child position."
+                },
+                "signedFractionalCashInLieuSize": {
+                    "type": "number",
+                    "description": "Signed fractional entitlement settled as cash-in-lieu."
+                },
+                "childAvgPrice": {
+                    "type": "number",
+                    "description": "Child basis transferred from this source lineage in child and account currencies."
+                },
+                "childAvgLocalPrice": {
+                    "type": "number"
+                },
+                "cashAdjustment": {
+                    "type": "number",
+                    "description": "Rounded account-currency cash and realized PnL attributed to this lineage."
+                },
+                "realizedPnl": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "id",
+                "sourcePositionId",
+                "sourceAllocationId",
+                "rootPositionId",
+                "strategyId",
+                "signedChildAllocationSize",
+                "signedFractionalCashInLieuSize",
+                "childAvgPrice",
+                "childAvgLocalPrice",
+                "cashAdjustment",
+                "realizedPnl"
+            ],
+            "additionalProperties": false,
+            "description": "Immutable attribution of one source lineage to a pooled spin-off settlement bucket."
+        },
+        "ISimBrokerExecutionCheckpoint": {
+            "type": "object",
+            "properties": {
+                "triggeredStops": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "triggeredStopLimits": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "executionSymbols": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "minItems": 2,
+                        "maxItems": 2
+                    }
+                },
+                "capacities": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "minItems": 2,
+                        "items": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "$ref": "#/definitions/IContractExecutionCapacity"
+                            }
+                        ],
+                        "maxItems": 2
+                    }
+                }
+            },
+            "required": [
+                "triggeredStops",
+                "triggeredStopLimits",
+                "executionSymbols",
+                "capacities"
+            ],
+            "additionalProperties": false,
+            "description": "Trigger and residual-liquidity state must survive process boundaries without a second fill."
+        },
+        "IContractExecutionCapacity": {
+            "type": "object",
+            "properties": {
+                "bar": {
+                    "$ref": "#/definitions/IBar"
+                },
+                "remainingVolume": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "bar",
+                "remainingVolume"
+            ],
+            "additionalProperties": false
+        },
+        "IBar": {
+            "type": "object",
+            "properties": {
+                "high": {
+                    "type": "number"
+                },
+                "low": {
+                    "type": "number"
+                },
+                "close": {
+                    "type": "number"
+                },
+                "open": {
+                    "type": "number"
+                },
+                "index": {
+                    "type": "number"
+                },
+                "dayIndex": {
+                    "type": "number"
+                },
+                "sessionIndex": {
+                    "$ref": "#/definitions/IBarSessionIndex"
+                },
+                "time": {
+                    "type": "number"
+                },
+                "timeEnd": {
+                    "type": "number"
+                },
+                "timeframe": {
+                    "$ref": "#/definitions/Timeframe"
+                },
+                "volume": {
+                    "type": "number"
+                },
+                "trades": {
+                    "type": "number"
+                },
+                "tradeSymbol": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "close",
+                "dayIndex",
+                "high",
+                "index",
+                "low",
+                "open",
+                "sessionIndex",
+                "time",
+                "timeEnd",
+                "timeframe",
+                "volume"
+            ],
+            "additionalProperties": false
+        },
+        "IBarSessionIndex": {
+            "type": "object",
+            "properties": {
+                "jp": {
+                    "type": "number"
+                },
+                "gb": {
+                    "type": "number"
+                },
+                "us": {
+                    "type": "number"
+                },
+                "au": {
+                    "type": "number"
+                }
+            },
+            "additionalProperties": false
+        },
+        "Timeframe": {
+            "type": "string",
+            "enum": [
+                "1S",
+                "5S",
+                "10S",
+                "30S",
+                "45S",
+                "1",
+                "2",
+                "3",
+                "5",
+                "10",
+                "15",
+                "30",
+                "45",
+                "60",
+                "120",
+                "180",
+                "240",
+                "1D",
+                "1W",
+                "1M",
+                "3M",
+                "6M",
+                "12M"
+            ],
+            "description": "Timeframe"
+        },
+        "ILiveTradingContextCheckpoint": {
+            "type": "object",
+            "properties": {
+                "executionDomainGenerations": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "minItems": 2,
+                        "items": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "number"
+                            }
+                        ],
+                        "maxItems": 2
+                    }
+                },
+                "executionMarkCoverage": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "minItems": 2,
+                        "items": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "$ref": "#/definitions/IExecutionMarkCoverage"
+                            }
+                        ],
+                        "maxItems": 2
+                    }
+                },
+                "executionMarks": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "minItems": 2,
+                        "items": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "$ref": "#/definitions/IExecutionMark"
+                            }
+                        ],
+                        "maxItems": 2
+                    }
+                },
+                "now": {
+                    "type": "number"
+                },
+                "priceDomains": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IActivePriceDomain"
+                    }
+                },
+                "referencePrices": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number"
+                    }
+                },
+                "version": {
+                    "type": "number",
+                    "const": 1
+                }
+            },
+            "required": [
+                "executionDomainGenerations",
+                "executionMarkCoverage",
+                "executionMarks",
+                "now",
+                "priceDomains",
+                "referencePrices",
+                "version"
+            ],
+            "additionalProperties": false
+        },
+        "IExecutionMarkCoverage": {
+            "type": "object",
+            "properties": {
+                "start": {
+                    "type": "number"
+                },
+                "end": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "start",
+                "end"
+            ],
+            "additionalProperties": false
+        },
+        "IExecutionMark": {
+            "type": "object",
+            "properties": {
+                "price": {
+                    "type": "number"
+                },
+                "observedAt": {
+                    "type": "number"
+                },
+                "provenance": {
+                    "type": "string",
+                    "enum": [
+                        "historical-bar",
+                        "live-broker",
+                        "corporate-action-carry"
+                    ]
+                },
+                "coverageStart": {
+                    "type": "number"
+                },
+                "coverageEnd": {
+                    "type": "number"
+                },
+                "domainGeneration": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "price",
+                "observedAt",
+                "provenance",
+                "coverageStart",
+                "coverageEnd",
+                "domainGeneration"
+            ],
+            "additionalProperties": false
+        },
+        "IActivePriceDomain": {
+            "type": "object",
+            "properties": {
+                "referenceSymbol": {
+                    "type": "string"
+                },
+                "executionSymbol": {
+                    "type": "string"
+                },
+                "transform": {
+                    "$ref": "#/definitions/IPriceTransform"
+                }
+            },
+            "required": [
+                "referenceSymbol",
+                "executionSymbol",
+                "transform"
+            ],
+            "additionalProperties": false
+        },
+        "IPriceTransform": {
+            "type": "object",
+            "properties": {
+                "priceScale": {
+                    "type": "number",
+                    "description": "Multiplier applied to raw prices and price distances."
+                },
+                "priceOffset": {
+                    "type": "number",
+                    "description": "Additive adjustment applied only to absolute prices."
+                },
+                "quantityScale": {
+                    "type": "number",
+                    "description": "Multiplier that converts reference quantities into raw quantities."
+                }
+            },
+            "required": [
+                "priceScale",
+                "priceOffset",
+                "quantityScale"
+            ],
+            "additionalProperties": false,
+            "description": "Affine mapping between execution/raw units and the causal reference units observed by a strategy at one market timestamp."
+        },
+        "IQuoteLiquidityBar": {
+            "type": "object",
+            "properties": {
+                "time": {
+                    "type": "number"
+                },
+                "timeEnd": {
+                    "type": "number"
+                },
+                "timeframe": {
+                    "$ref": "#/definitions/Timeframe"
+                },
+                "closeQuoteTime": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "closeBid": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "closeAsk": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "closeSpread": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "closeSpreadBps": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "validDurationMs": {
+                    "type": "number"
+                },
+                "timeWeightedSpreadBps": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "coverage": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "time",
+                "timeEnd",
+                "timeframe",
+                "closeQuoteTime",
+                "closeBid",
+                "closeAsk",
+                "closeSpread",
+                "closeSpreadBps",
+                "validDurationMs",
+                "timeWeightedSpreadBps",
+                "coverage"
+            ],
+            "additionalProperties": false,
+            "description": "Causal NBBO liquidity state aligned to one completed market bar."
+        }
+    }
+}

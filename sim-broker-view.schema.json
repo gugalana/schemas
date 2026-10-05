@@ -1,0 +1,1466 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/definitions/ISimBrokerAccountView",
+    "definitions": {
+        "ISimBrokerAccountView": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "simulationProfile": {
+                    "$ref": "#/definitions/ISimBrokerServiceProfile"
+                },
+                "economicTime": {
+                    "type": "number"
+                },
+                "observedAt": {
+                    "type": "number"
+                },
+                "broker": {
+                    "$ref": "#/definitions/IBrokerState"
+                },
+                "portfolio": {
+                    "$ref": "#/definitions/IPortfolioState"
+                },
+                "fx": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IFxRateObservation"
+                    }
+                }
+            },
+            "required": [
+                "id",
+                "currency",
+                "simulationProfile",
+                "economicTime",
+                "observedAt",
+                "broker",
+                "portfolio",
+                "fx"
+            ],
+            "additionalProperties": false,
+            "description": "Committed account view; economic time and operational receipt time are deliberately distinct."
+        },
+        "ISimBrokerServiceProfile": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Human-readable identity retained with the complete resolved policy.",
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"
+                },
+                "slippage": {
+                    "$ref": "#/definitions/ICompositeDynamicValue"
+                },
+                "randomness": {
+                    "type": "number",
+                    "description": "Probability that an ordinary order receives one injected execution scenario, not its severity.",
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "seed": {
+                    "type": "string",
+                    "description": "Stable experiment seed; account and economic order coordinates isolate deterministic draws.",
+                    "minLength": 1,
+                    "maxLength": 128
+                },
+                "spread": {
+                    "$ref": "#/definitions/ICompositeDynamicValue"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "id",
+                "randomness",
+                "seed"
+            ],
+            "description": "Standalone policy: full bar-volume capacity is engine-owned; quote-based spread is unavailable."
+        },
+        "ICompositeDynamicValue": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/ICompositeValue"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "const": "dynamic"
+                        }
+                    },
+                    "required": [
+                        "type"
+                    ],
+                    "additionalProperties": false
+                }
+            ]
+        },
+        "ICompositeValue": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "type": "number",
+                    "description": "Non-negative magnitude. With type \"perc\", this is a ratio from 0 to 1 resolved against the basis documented by the owning parameter; otherwise it uses that parameter's fixed unit.",
+                    "minimum": 0
+                },
+                "type": {
+                    "$ref": "#/definitions/IValueKind",
+                    "description": "Value interpretation: \"fixed\" uses the owning parameter's unit and \"perc\" uses its documented basis. Defaults to \"fixed\"."
+                }
+            },
+            "required": [
+                "value"
+            ],
+            "additionalProperties": false
+        },
+        "IValueKind": {
+            "type": "string",
+            "enum": [
+                "fixed",
+                "perc"
+            ]
+        },
+        "IBrokerState": {
+            "type": "object",
+            "properties": {
+                "lastSync": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "isConnected": {
+                    "type": "boolean"
+                },
+                "brokerAccountStatus": {
+                    "$ref": "#/definitions/BrokerAccountStatus"
+                },
+                "accountEquity": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "cash": {
+                    "type": "number"
+                },
+                "accruedFees": {
+                    "type": "number"
+                },
+                "accruedSpread": {
+                    "type": "number"
+                },
+                "accruedSlippage": {
+                    "type": "number"
+                },
+                "buyingPower": {
+                    "type": "number"
+                },
+                "positionUnrealizedPnl": {
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "description": "Broker-authoritative aggregate unrealized position PnL in account currency."
+                },
+                "dailyPnl": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/IBrokerAccountPnl"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Account-wide Daily PnL and its coverage, owned exclusively by the live broker adapter."
+                },
+                "positions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IBrokerPositionSnapshot"
+                    },
+                    "description": "Complete validated current broker-netted positions."
+                },
+                "cancelableOrderIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Pending Gu order ids whose current broker session exposes a complete cancellation handle."
+                },
+                "unattributedPendingOrders": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IBrokerPendingOrderSnapshot"
+                    },
+                    "description": "Active broker orders that cannot be attributed to a current Gu order."
+                },
+                "unattributedPendingOrderSymbols": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Symbols with active broker orders that cannot be attributed to a current Gu order."
+                },
+                "entryBlockedSymbols": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Symbols whose broker exposure is known but whose exact execution contract is temporarily unresolved."
+                },
+                "orders": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IOrder"
+                    }
+                }
+            },
+            "required": [
+                "lastSync",
+                "isConnected",
+                "brokerAccountStatus",
+                "accountEquity",
+                "cash",
+                "accruedFees",
+                "accruedSpread",
+                "accruedSlippage",
+                "buyingPower",
+                "positionUnrealizedPnl",
+                "dailyPnl",
+                "positions",
+                "cancelableOrderIds",
+                "unattributedPendingOrders",
+                "unattributedPendingOrderSymbols",
+                "entryBlockedSymbols",
+                "orders"
+            ],
+            "additionalProperties": false
+        },
+        "BrokerAccountStatus": {
+            "type": "number",
+            "enum": [
+                0,
+                1,
+                2,
+                4,
+                5
+            ]
+        },
+        "IBrokerAccountPnl": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "dayStart": {
+                    "type": "number"
+                },
+                "dayEnd": {
+                    "type": "number"
+                },
+                "observedAt": {
+                    "type": "number"
+                },
+                "source": {
+                    "type": "string",
+                    "enum": [
+                        "alpaca-account-history",
+                        "ibkr-account-pnl",
+                        "sim-broker-account"
+                    ]
+                },
+                "unavailableReason": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "enum": [
+                        "broker-unavailable",
+                        "invalid-evidence",
+                        null
+                    ]
+                },
+                "openingEquity": {
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "description": "Broker baseline, or broker equity less native PnL when no baseline is exposed."
+                },
+                "history": {
+                    "anyOf": [
+                        {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/ILiveAccountPnlPoint"
+                            }
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Available chronological broker points; missing history never invalidates the current scalar."
+                }
+            },
+            "required": [
+                "amount",
+                "currency",
+                "dayEnd",
+                "dayStart",
+                "history",
+                "observedAt",
+                "openingEquity",
+                "source",
+                "unavailableReason"
+            ],
+            "additionalProperties": false,
+            "description": "Native account result with an optional broker-observed path for daily risk extrema."
+        },
+        "ILiveAccountPnlPoint": {
+            "type": "object",
+            "properties": {
+                "observedAt": {
+                    "type": "number"
+                },
+                "amount": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "observedAt",
+                "amount"
+            ],
+            "additionalProperties": false,
+            "description": "One broker-sourced point on the same account-wide daily trading path."
+        },
+        "IBrokerPositionSnapshot": {
+            "type": "object",
+            "properties": {
+                "openedAt": {
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "description": "Proven start of current net exposure; unavailable when execution coverage is insufficient."
+                },
+                "averageEntryPrice": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "currentPrice": {
+                    "type": "number"
+                },
+                "netSize": {
+                    "type": "number",
+                    "description": "Signed broker net quantity: positive long, negative short."
+                },
+                "observedAt": {
+                    "type": "number"
+                },
+                "tradeSymbol": {
+                    "type": "string"
+                },
+                "unrealizedPnl": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "openedAt",
+                "averageEntryPrice",
+                "currency",
+                "currentPrice",
+                "netSize",
+                "observedAt",
+                "tradeSymbol",
+                "unrealizedPnl"
+            ],
+            "additionalProperties": false,
+            "description": "Validated broker-authoritative net position for one execution symbol."
+        },
+        "IBrokerPendingOrderSnapshot": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Stable account-scoped opaque identity safe for owner controls."
+                },
+                "brokerOrderId": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "Stable provider identity when the broker has acknowledged one."
+                },
+                "cancelable": {
+                    "type": "boolean",
+                    "description": "Whether the current broker session exposes every identity required to cancel this order."
+                },
+                "filledSize": {
+                    "type": "number"
+                },
+                "observedAt": {
+                    "type": "number"
+                },
+                "orderType": {
+                    "type": "string"
+                },
+                "remainingSize": {
+                    "type": "number"
+                },
+                "side": {
+                    "type": "string",
+                    "enum": [
+                        "buy",
+                        "sell"
+                    ]
+                },
+                "size": {
+                    "type": "number"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "timeInForce": {
+                    "type": "string"
+                },
+                "tradeSymbol": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "id",
+                "brokerOrderId",
+                "cancelable",
+                "filledSize",
+                "observedAt",
+                "orderType",
+                "remainingSize",
+                "side",
+                "size",
+                "status",
+                "timeInForce",
+                "tradeSymbol"
+            ],
+            "additionalProperties": false,
+            "description": "Active broker order that cannot be coherently attributed to one current Gu order."
+        },
+        "IOrder": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Internal order id. Always present and unique inside the account."
+                },
+                "signalId": {
+                    "type": "string",
+                    "description": "Internal unique id of the signal (for logging and correlation)"
+                },
+                "brokerOrderId": {
+                    "type": "string",
+                    "description": "Broker order id as returned by the broker. May be undefined for backtests or before acceptance."
+                },
+                "observedBrokerOrderId": {
+                    "type": "string",
+                    "description": "Retained remote broker evidence on immutable legacy broker-truth journal rows."
+                },
+                "positionId": {
+                    "type": "string",
+                    "description": "Associated position id. This value is assigned when the order is created and never changes afterwards."
+                },
+                "strategyId": {
+                    "type": "string",
+                    "description": "Strategy Id (unique strategy identifier)"
+                },
+                "tradeSymbol": {
+                    "type": "string",
+                    "description": "Tradable symbol to send to the broker"
+                },
+                "side": {
+                    "$ref": "#/definitions/OrderSide",
+                    "description": "Long or short?"
+                },
+                "orderType": {
+                    "$ref": "#/definitions/OrderType",
+                    "description": "Requested order type"
+                },
+                "intent": {
+                    "$ref": "#/definitions/OrderIntent",
+                    "description": "Order intent: open a new position or close an existing one"
+                },
+                "currency": {
+                    "type": "string",
+                    "description": "Order currency"
+                },
+                "size": {
+                    "type": "number",
+                    "description": "Order size in units (shares, contracts, etc.). This is the requested size by Gu, not necessarily filled yet."
+                },
+                "emitPrice": {
+                    "type": "number",
+                    "description": "Price snapshot when the order was created, this is used for logging and backtesting"
+                },
+                "limitPrice": {
+                    "type": "number",
+                    "description": "Limit price for limit orders"
+                },
+                "stopPrice": {
+                    "type": "number",
+                    "description": "Stop price for stop and stop-limit orders"
+                },
+                "takeProfit": {
+                    "type": "number",
+                    "description": "Logical take profit level suggested by the strategy. This is a *position-level* target, not necessarily a broker order."
+                },
+                "stopLoss": {
+                    "type": "number",
+                    "description": "Logical stop loss level suggested by the strategy. This is a *position-level* protection, not necessarily a broker order."
+                },
+                "trailingStop": {
+                    "$ref": "#/definitions/ICompositeValue",
+                    "description": "Logical trailing stop level (if used)"
+                },
+                "status": {
+                    "$ref": "#/definitions/OrderStatus",
+                    "description": "Current order status - DO NOT CHANGE DIRECTLY"
+                },
+                "timeInForce": {
+                    "$ref": "#/definitions/OrderTimeInForce",
+                    "description": "Broker lifecycle policy for this order"
+                },
+                "extendedHours": {
+                    "type": "boolean",
+                    "description": "Submit this order during the broker's supported extended-hours session."
+                },
+                "ocoGroup": {
+                    "type": "string",
+                    "description": "One-cancels-others group id"
+                },
+                "oco": {
+                    "type": "boolean",
+                    "description": "One-cancels-others flag.  Are all orders in the group to be canceled when one is filled?"
+                },
+                "createdAt": {
+                    "type": "number",
+                    "description": "Timestamp when the order was created (epoch UTC)"
+                },
+                "createdSequence": {
+                    "type": "number",
+                    "description": "Account-local causal sequence assigned when the order was created"
+                },
+                "updatedAt": {
+                    "type": "number",
+                    "description": "Timestamp when the order was last updated (epoch UTC)"
+                },
+                "statusReason": {
+                    "type": "string",
+                    "description": "Exact broker-authored terminal reason for a rejected or canceled order"
+                },
+                "fills": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IOrderFillMeta"
+                    },
+                    "description": "All fills associated with this order. Empty or undefined means no fills yet."
+                },
+                "filledSize": {
+                    "type": "number",
+                    "description": "Total filled size (sum of all fills.size). 0 when no fills, equals \"size\" when fully filled."
+                },
+                "avgFillPrice": {
+                    "type": "number",
+                    "description": "Average fill price. Undefined if there are no fills yet."
+                },
+                "totalFees": {
+                    "type": "number",
+                    "description": "Total fees paid for this order (sum of fills.fees). Undefined if not available or not filled."
+                },
+                "score": {
+                    "type": "number",
+                    "description": "A custom score assigned to this order by the Risk Manager."
+                },
+                "meta": {
+                    "type": "object",
+                    "description": "Additional information for debugging or analytics"
+                },
+                "riskMeta": {
+                    "$ref": "#/definitions/ISignalRiskMeta",
+                    "description": "Optional risk metadata extracted from the originating signal"
+                }
+            },
+            "required": [
+                "id",
+                "signalId",
+                "positionId",
+                "strategyId",
+                "tradeSymbol",
+                "side",
+                "orderType",
+                "intent",
+                "currency",
+                "size",
+                "emitPrice",
+                "status",
+                "timeInForce",
+                "createdAt",
+                "createdSequence",
+                "score"
+            ],
+            "additionalProperties": false,
+            "description": "Concrete order object created from an execute/stop signal and sent to a broker or simulated in backtests."
+        },
+        "OrderSide": {
+            "type": "number",
+            "enum": [
+                1,
+                -1
+            ],
+            "description": "Logical side of the trade from the strategy viewpoint. How this maps to BUY/SELL depends on the instrument type. IMPORTANT: do NOT change these values as they are used in calculations!"
+        },
+        "OrderType": {
+            "type": "number",
+            "enum": [
+                0,
+                1,
+                2,
+                3
+            ]
+        },
+        "OrderIntent": {
+            "type": "number",
+            "enum": [
+                1,
+                -1
+            ]
+        },
+        "OrderStatus": {
+            "type": "number",
+            "enum": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+            ],
+            "description": "Order status (not broker-native, this is normalized)."
+        },
+        "OrderTimeInForce": {
+            "type": "string",
+            "enum": [
+                "DAY",
+                "GTC",
+                "IOC",
+                "FOK"
+            ],
+            "description": "Time-in-force abstraction. Not all brokers will support all values."
+        },
+        "IOrderFillMeta": {
+            "type": "object",
+            "properties": {
+                "price": {
+                    "type": "number",
+                    "description": "Fill price for this individual fill"
+                },
+                "size": {
+                    "type": "number",
+                    "description": "Filled size for this individual fill"
+                },
+                "time": {
+                    "type": "number",
+                    "description": "Time when this fill occurred (epoch UTC)"
+                },
+                "sequence": {
+                    "type": "number",
+                    "description": "Monotonic account-local sequence used to order trading events sharing one timestamp"
+                },
+                "localPrice": {
+                    "type": "number",
+                    "description": "Fill price converted to local account currency (price * exchange rate)"
+                },
+                "fxRate": {
+                    "type": "number",
+                    "description": "Exact broker-owned conversion rate applied to this fill."
+                },
+                "fxObservationFingerprint": {
+                    "type": "string",
+                    "description": "Frozen observation identity proving the conversion used by this fill."
+                },
+                "fees": {
+                    "type": "number",
+                    "description": "Fees paid for this specific fill in local account currency"
+                },
+                "spread": {
+                    "type": "number",
+                    "description": "Spread cost paid for this specific fill in local account currency"
+                },
+                "slippage": {
+                    "type": "number",
+                    "description": "Slippage cost paid for this specific fill in local account currency"
+                },
+                "allocatedCapital": {
+                    "type": "number",
+                    "description": "Effective capital allocated by this fill in account currency. For cash instruments this is typically cash plus fees. For margined instruments this is typically initial margin plus fees."
+                }
+            },
+            "required": [
+                "price",
+                "size",
+                "time",
+                "sequence",
+                "localPrice",
+                "fxRate",
+                "fxObservationFingerprint",
+                "fees"
+            ],
+            "additionalProperties": false,
+            "description": "Single fill event for an order. An order can be filled in multiple chunks."
+        },
+        "ISignalRiskMeta": {
+            "type": "object",
+            "properties": {
+                "riskProfileId": {
+                    "type": "string"
+                },
+                "atr": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "dailyAtr": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "dailyHv": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "riskProfileId",
+                "atr",
+                "dailyAtr",
+                "dailyHv"
+            ],
+            "additionalProperties": false,
+            "description": "Optional risk metadata attached to signals and orders"
+        },
+        "IPortfolioState": {
+            "type": "object",
+            "properties": {
+                "accountId": {
+                    "type": "string"
+                },
+                "externalPositions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IBrokerExternalPosition"
+                    }
+                },
+                "portfolio": {
+                    "$ref": "#/definitions/IPortfolio"
+                },
+                "metrics": {
+                    "$ref": "#/definitions/IPortfolioMetrics"
+                },
+                "positions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IPosition"
+                    }
+                },
+                "orders": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IOrder"
+                    }
+                }
+            },
+            "required": [
+                "accountId",
+                "externalPositions",
+                "portfolio",
+                "metrics",
+                "positions",
+                "orders"
+            ],
+            "additionalProperties": false
+        },
+        "IBrokerExternalPosition": {
+            "type": "object",
+            "properties": {
+                "openedAt": {
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "description": "Actual broker execution time, never first observation time."
+                },
+                "averageEntryPrice": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "currentPrice": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "observedAt": {
+                    "type": "number"
+                },
+                "origin": {
+                    "type": "string",
+                    "const": "BROKER_EXTERNAL"
+                },
+                "side": {
+                    "$ref": "#/definitions/OrderSide"
+                },
+                "size": {
+                    "type": "number"
+                },
+                "tradeSymbol": {
+                    "type": "string"
+                },
+                "unrealizedPnl": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "openedAt",
+                "averageEntryPrice",
+                "currency",
+                "currentPrice",
+                "id",
+                "observedAt",
+                "origin",
+                "side",
+                "size",
+                "tradeSymbol",
+                "unrealizedPnl"
+            ],
+            "additionalProperties": false,
+            "description": "Broker-authoritative exposure that has no provable Gu strategy origin."
+        },
+        "IPortfolio": {
+            "type": "object",
+            "properties": {
+                "currency": {
+                    "type": "string",
+                    "description": "Currency of the account"
+                },
+                "initialCapital": {
+                    "type": "number",
+                    "description": "Immutable account capital captured from the first synchronized broker state"
+                },
+                "cash": {
+                    "type": "number",
+                    "description": "Broker cash before subtracting the separately reported self-assessed tax reserve"
+                },
+                "accruedFees": {
+                    "type": "number",
+                    "description": "Total fees accrued"
+                },
+                "accruedSpread": {
+                    "type": "number",
+                    "description": "Total spread accrued"
+                },
+                "accruedSlippage": {
+                    "type": "number",
+                    "description": "Total slippage accrued"
+                },
+                "realizedPnl": {
+                    "type": "number",
+                    "description": "Realized profit and loss"
+                },
+                "dividendPnl": {
+                    "type": "number",
+                    "description": "Gross dividend cash attributed through the immutable dividend ledger"
+                },
+                "taxPaidCash": {
+                    "type": "number",
+                    "description": "Cash paid or withheld for taxes"
+                },
+                "settledTaxYears": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "description": "Tax years whose self-assessed liability was already settled"
+                },
+                "taxToPay": {
+                    "type": "number",
+                    "description": "Total estimated unpaid self-assessed tax liability"
+                },
+                "taxReserveCash": {
+                    "type": "number",
+                    "description": "Finalized unpaid self-assessed tax liability reserved from investable capital"
+                },
+                "dividendAccrualSessionDates": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "description": "Latest processed instrument session date by canonical session profile"
+                },
+                "maxEquity": {
+                    "type": "number",
+                    "description": "Highest tax-neutral performance equity observed"
+                },
+                "dailyMaxEquity": {
+                    "type": "number",
+                    "description": "Daily max tax-neutral performance equity observed"
+                },
+                "dailyOpeningEquity": {
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "description": "Historical opening equity or the broker-native daily PnL baseline used for Live risk percentages."
+                },
+                "dailyPnl": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/ILiveAccountPnl"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Latest broker-backed Live Daily PnL observation; never reconstructed from journal accounting."
+                },
+                "dailyRiskObservedAt": {
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "description": "Last economic observation included in the retained broker risk path, even during an outage."
+                },
+                "dailyNonTradingCashFlow": {
+                    "type": "number",
+                    "description": "Historical performance-equity cash flows; Live broker risk does not consume this field"
+                },
+                "dailyMaxLoss": {
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "description": "Largest opening-baseline loss observed during the active account risk day"
+                },
+                "minEquity": {
+                    "type": "number",
+                    "description": "Lowest tax-neutral performance equity observed"
+                },
+                "dailyMinEquity": {
+                    "type": "number",
+                    "description": "Daily min tax-neutral performance equity observed"
+                },
+                "maxRunup": {
+                    "type": "number",
+                    "description": "Largest absolute gain from min to max (run-up), currency units"
+                },
+                "maxRunupPerc": {
+                    "type": "number",
+                    "description": "Largest gain ratio observed from its contemporaneous positive equity trough"
+                },
+                "maxRunupTroughEquity": {
+                    "type": "number",
+                    "description": "Positive equity trough associated with maxRunupPerc"
+                },
+                "dailyMaxRunup": {
+                    "type": "number",
+                    "description": "Largest daily gain from min to max (run-up), currency units"
+                },
+                "dailyMaxRunupPerc": {
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "description": "Largest daily gain ratio observed from its contemporaneous positive equity trough"
+                },
+                "dailyMaxRunupTroughEquity": {
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "description": "Positive equity trough associated with dailyMaxRunupPerc"
+                },
+                "maxDrawdown": {
+                    "type": "number",
+                    "description": "Largest absolute drop from max to min (drawdown), currency units"
+                },
+                "maxDrawdownPerc": {
+                    "type": "number",
+                    "description": "Largest drop ratio observed from its contemporaneous positive equity peak"
+                },
+                "maxDrawdownPeakEquity": {
+                    "type": "number",
+                    "description": "Positive equity peak associated with maxDrawdownPerc"
+                },
+                "dailyMaxDrawdown": {
+                    "type": "number",
+                    "description": "Largest daily drop from max to min (drawdown), currency units"
+                },
+                "dailyMaxDrawdownPerc": {
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "description": "Largest daily drop ratio observed from its contemporaneous positive equity peak"
+                },
+                "dailyMaxDrawdownPeakEquity": {
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "description": "Positive equity peak associated with dailyMaxDrawdownPerc"
+                },
+                "eodEquity": {
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "description": "Tax-neutral performance equity finalized when the account risk day closes"
+                },
+                "openPositions": {
+                    "type": "number",
+                    "description": "Number of currently open positions"
+                }
+            },
+            "required": [
+                "currency",
+                "initialCapital",
+                "cash",
+                "accruedFees",
+                "accruedSpread",
+                "accruedSlippage",
+                "realizedPnl",
+                "dividendPnl",
+                "taxPaidCash",
+                "settledTaxYears",
+                "taxToPay",
+                "taxReserveCash",
+                "dividendAccrualSessionDates",
+                "maxEquity",
+                "dailyMaxEquity",
+                "dailyOpeningEquity",
+                "dailyPnl",
+                "dailyRiskObservedAt",
+                "dailyNonTradingCashFlow",
+                "dailyMaxLoss",
+                "minEquity",
+                "dailyMinEquity",
+                "maxRunup",
+                "maxRunupPerc",
+                "maxRunupTroughEquity",
+                "dailyMaxRunup",
+                "dailyMaxRunupPerc",
+                "dailyMaxRunupTroughEquity",
+                "maxDrawdown",
+                "maxDrawdownPerc",
+                "maxDrawdownPeakEquity",
+                "dailyMaxDrawdown",
+                "dailyMaxDrawdownPerc",
+                "dailyMaxDrawdownPeakEquity",
+                "openPositions"
+            ],
+            "additionalProperties": false
+        },
+        "ILiveAccountPnl": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "dayStart": {
+                    "type": "number"
+                },
+                "dayEnd": {
+                    "type": "number"
+                },
+                "observedAt": {
+                    "type": "number"
+                },
+                "source": {
+                    "type": "string",
+                    "enum": [
+                        "alpaca-account-history",
+                        "ibkr-account-pnl",
+                        "sim-broker-account"
+                    ]
+                },
+                "unavailableReason": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "enum": [
+                        "broker-unavailable",
+                        "invalid-evidence",
+                        null
+                    ]
+                }
+            },
+            "required": [
+                "amount",
+                "currency",
+                "dayStart",
+                "dayEnd",
+                "observedAt",
+                "source",
+                "unavailableReason"
+            ],
+            "additionalProperties": false,
+            "description": "Account-wide native daily result; the broker owns its economic reset semantics."
+        },
+        "IPortfolioMetrics": {
+            "type": "object",
+            "properties": {
+                "equity": {
+                    "type": "number",
+                    "description": "Accounting equity: cash plus the current mark-to-market contribution of open positions"
+                },
+                "unrealizedPnl": {
+                    "type": "number",
+                    "description": "Unrealized profit and loss"
+                },
+                "buyingPower": {
+                    "type": "number",
+                    "description": "Buying power available after subtracting finalized self-assessed tax reserve"
+                },
+                "reservedFunds": {
+                    "type": "number",
+                    "description": "Funds reserved for open orders, not yet approved, as when they are approved the cash is automatically updated"
+                }
+            },
+            "required": [
+                "equity",
+                "unrealizedPnl",
+                "buyingPower",
+                "reservedFunds"
+            ],
+            "additionalProperties": false
+        },
+        "IPosition": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Unique position id"
+                },
+                "strategyId": {
+                    "type": "string",
+                    "description": "Strategy that owns this position (or \"[Multiple]\")"
+                },
+                "tradeSymbol": {
+                    "type": "string",
+                    "description": "Tradable symbol used by the position"
+                },
+                "side": {
+                    "$ref": "#/definitions/OrderSide",
+                    "description": "Long or short"
+                },
+                "currency": {
+                    "type": "string",
+                    "description": "Position currency"
+                },
+                "size": {
+                    "type": "number",
+                    "description": "Net size (units). 0 means flat, >0 long, <0 short"
+                },
+                "entrySize": {
+                    "type": "number",
+                    "description": "Maximum entry size (units) reached during the lifetime of this position"
+                },
+                "avgPrice": {
+                    "type": "number",
+                    "description": "Average entry price"
+                },
+                "avgLocalPrice": {
+                    "type": "number",
+                    "description": "Average entry price converted to local currency"
+                },
+                "strategyAvgPrice": {
+                    "type": "number",
+                    "description": "Causal entry basis exposed to strategies after price-domain changes."
+                },
+                "strategyAvgLocalPrice": {
+                    "type": "number",
+                    "description": "Causal strategy entry basis converted to account currency."
+                },
+                "allocatedCapitalAtEntry": {
+                    "type": "number",
+                    "description": "Capital allocated to build the entry side of this position in account currency. This is persisted from actual broker funding when available."
+                },
+                "closePrice": {
+                    "type": "number",
+                    "description": "Last closing price for this position (if closed)"
+                },
+                "localClosePrice": {
+                    "type": "number",
+                    "description": "Last closing price converted to local currency"
+                },
+                "takeProfit": {
+                    "type": "number",
+                    "description": "Logical take profit level for this position (optional)"
+                },
+                "stopLoss": {
+                    "type": "number",
+                    "description": "Logical stop loss level for this position (optional)"
+                },
+                "trailingStop": {
+                    "$ref": "#/definitions/ICompositeValue",
+                    "description": "Logical trailing stop level (if used)"
+                },
+                "realizedPnl": {
+                    "type": "number",
+                    "description": "Total realized PnL for this position. This is cumulative over multiple opens/closes if the position was partially closed or scaled in/out."
+                },
+                "strategyRealizedPnl": {
+                    "type": "number",
+                    "description": "Realized PnL computed from the causal strategy basis."
+                },
+                "unrealizedPnl": {
+                    "type": "number",
+                    "description": "Current unrealized PnL for this position. Based on the last market price. This value is cached here for convenience, but may be undefined if not calculated yet."
+                },
+                "strategyUnrealizedPnl": {
+                    "type": "number",
+                    "description": "Unrealized PnL computed from the causal strategy basis."
+                },
+                "mfe": {
+                    "type": "number",
+                    "description": "Maximum favorable excursion (explicit MFE)"
+                },
+                "strategyMfe": {
+                    "type": "number",
+                    "description": "Maximum favorable excursion on the causal strategy view."
+                },
+                "mae": {
+                    "type": "number",
+                    "description": "Maximum adverse excursion (explicit MAE, typically a negative value)"
+                },
+                "strategyMae": {
+                    "type": "number",
+                    "description": "Maximum adverse excursion on the causal strategy view."
+                },
+                "corporateActionAllocationExcursions": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/ICorporateActionAllocationExcursion"
+                    },
+                    "description": "Exact account-currency excursions for beneficial allocations inside an engine-owned corporate-action child pool, keyed by allocation id."
+                },
+                "corporateActionLineageMfe": {
+                    "type": "number",
+                    "description": "Synchronous maximum favorable PnL for the complete logical lineage."
+                },
+                "corporateActionLineageMae": {
+                    "type": "number",
+                    "description": "Synchronous maximum adverse PnL for the complete logical lineage."
+                },
+                "openedAt": {
+                    "type": "number",
+                    "description": "Timestamp when the position was first opened"
+                },
+                "openedSequence": {
+                    "type": "number",
+                    "description": "Account-local causal sequence of the opening event"
+                },
+                "closedAt": {
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "description": "Timestamp when the position was fully closed (null if still open)"
+                },
+                "closedSequence": {
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "description": "Account-local causal sequence of the closing event, or null while open"
+                },
+                "updatedAt": {
+                    "type": "number",
+                    "description": "Last update timestamp (size change, TP/SL update, etc.)"
+                },
+                "updatedSequence": {
+                    "type": "number",
+                    "description": "Account-local causal sequence of the last trading mutation"
+                }
+            },
+            "required": [
+                "id",
+                "strategyId",
+                "tradeSymbol",
+                "side",
+                "currency",
+                "size",
+                "entrySize",
+                "avgPrice",
+                "avgLocalPrice",
+                "strategyAvgPrice",
+                "strategyAvgLocalPrice",
+                "realizedPnl",
+                "strategyRealizedPnl",
+                "openedAt",
+                "openedSequence",
+                "closedAt",
+                "closedSequence",
+                "updatedAt",
+                "updatedSequence"
+            ],
+            "additionalProperties": false,
+            "description": "Position object managed by the PortfolioManager."
+        },
+        "ICorporateActionAllocationExcursion": {
+            "type": "object",
+            "properties": {
+                "mfe": {
+                    "type": "number",
+                    "description": "Maximum favorable allocation PnL observed on the physical child path."
+                },
+                "mae": {
+                    "type": "number",
+                    "description": "Maximum adverse allocation PnL observed on the physical child path."
+                },
+                "unrealizedPnl": {
+                    "type": "number",
+                    "description": "Current account-currency unrealized PnL while the child pool remains open."
+                },
+                "realizedPnl": {
+                    "type": "number",
+                    "description": "Final account-currency realized PnL after the child pool closes."
+                }
+            },
+            "required": [
+                "mfe",
+                "mae",
+                "unrealizedPnl",
+                "realizedPnl"
+            ],
+            "additionalProperties": false,
+            "description": "Path-dependent monetary excursions for one beneficial child allocation."
+        },
+        "IFxRateObservation": {
+            "type": "object",
+            "properties": {
+                "fromCurrency": {
+                    "$ref": "#/definitions/CurrencyCode"
+                },
+                "toCurrency": {
+                    "$ref": "#/definitions/CurrencyCode"
+                },
+                "rate": {
+                    "type": "number"
+                },
+                "effectiveAt": {
+                    "type": "number"
+                },
+                "knownAt": {
+                    "type": "number"
+                },
+                "provider": {
+                    "type": "string",
+                    "enum": [
+                        "frankfurter-v1",
+                        "identity",
+                        "interactive-brokers"
+                    ]
+                },
+                "fingerprint": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "fromCurrency",
+                "toCurrency",
+                "rate",
+                "effectiveAt",
+                "knownAt",
+                "provider",
+                "fingerprint"
+            ],
+            "additionalProperties": false,
+            "description": "One trusted currency observation returned by the active broker boundary."
+        },
+        "CurrencyCode": {
+            "type": "string",
+            "enum": [
+                "AUD",
+                "BGN",
+                "BRL",
+                "CAD",
+                "CHF",
+                "CNY",
+                "CZK",
+                "DKK",
+                "EUR",
+                "GBP",
+                "HKD",
+                "HUF",
+                "IDR",
+                "ILS",
+                "INR",
+                "ISK",
+                "JPY",
+                "KRW",
+                "MXN",
+                "MYR",
+                "NOK",
+                "NZD",
+                "PHP",
+                "PLN",
+                "RON",
+                "SEK",
+                "SGD",
+                "THB",
+                "TRY",
+                "USD",
+                "ZAR"
+            ]
+        }
+    }
+}

@@ -1,0 +1,72 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/definitions/ISimBrokerSimulationUpdate",
+    "definitions": {
+        "ISimBrokerSimulationUpdate": {
+            "type": "object",
+            "properties": {
+                "randomness": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "spread": {
+                    "$ref": "#/definitions/ICompositeDynamicValue"
+                },
+                "slippage": {
+                    "$ref": "#/definitions/ICompositeDynamicValue"
+                }
+            },
+            "required": [
+                "randomness"
+            ],
+            "additionalProperties": false,
+            "description": "Replace the editable execution terms; omitted costs disable their respective model."
+        },
+        "ICompositeDynamicValue": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/ICompositeValue"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "const": "dynamic"
+                        }
+                    },
+                    "required": [
+                        "type"
+                    ],
+                    "additionalProperties": false
+                }
+            ]
+        },
+        "ICompositeValue": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "type": "number",
+                    "description": "Non-negative magnitude. With type \"perc\", this is a ratio from 0 to 1 resolved against the basis documented by the owning parameter; otherwise it uses that parameter's fixed unit.",
+                    "minimum": 0
+                },
+                "type": {
+                    "$ref": "#/definitions/IValueKind",
+                    "description": "Value interpretation: \"fixed\" uses the owning parameter's unit and \"perc\" uses its documented basis. Defaults to \"fixed\"."
+                }
+            },
+            "required": [
+                "value"
+            ],
+            "additionalProperties": false
+        },
+        "IValueKind": {
+            "type": "string",
+            "enum": [
+                "fixed",
+                "perc"
+            ]
+        }
+    }
+}

@@ -16,6 +16,10 @@
                     "$ref": "#/definitions/IConfigCollector",
                     "description": "Selected server Collector source; desktop-only configurations do not start a Collector."
                 },
+                "simBroker": {
+                    "$ref": "#/definitions/ISimBrokerServiceConfig",
+                    "description": "Independent simulated broker process configuration."
+                },
                 "trader": {
                     "$ref": "#/definitions/IOperationalTraderConfig",
                     "description": "Trader configuration"
@@ -83,13 +87,534 @@
                 "provider": {
                     "type": "string",
                     "const": "massive"
+                },
+                "feed": {
+                    "type": "string",
+                    "enum": [
+                        "realtime",
+                        "delayed"
+                    ],
+                    "description": "Provider connection entitlement; execution consumers use source timestamps unchanged."
                 }
             },
             "required": [
-                "provider"
+                "provider",
+                "feed"
             ],
             "additionalProperties": false,
             "description": "One source is selected for server live, recovery and finalized-day maintenance."
+        },
+        "ISimBrokerServiceConfig": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/ISimBrokerProviderConfig"
+                },
+                {
+                    "$ref": "#/definitions/ISimBrokerHistoricalConfig"
+                }
+            ]
+        },
+        "ISimBrokerProviderConfig": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Filesystem-safe identity; changing it starts a separate environment.",
+                    "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                },
+                "port": {
+                    "type": "number",
+                    "description": "Loopback web/API port.",
+                    "minimum": 1,
+                    "maximum": 65535
+                },
+                "simulationProfile": {
+                    "$ref": "#/definitions/ISimBrokerServiceProfile"
+                },
+                "accountTemplate": {
+                    "type": "object",
+                    "properties": {
+                        "currency": {
+                            "type": "string",
+                            "description": "Account base currency; casing is normalized after schema validation."
+                        },
+                        "notificationsEnabled": {
+                            "type": "boolean",
+                            "description": "Whether this account may deliver notifications through globally configured channels; absence means disabled"
+                        },
+                        "soundsEnabled": {
+                            "type": "boolean",
+                            "description": "Whether the Live client may play position lifecycle sounds for this account; absence means disabled"
+                        },
+                        "instrumentPoolIds": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "Instrument pool ids that the account can use. If undefined, the account can use all instruments available in the context."
+                        },
+                        "strategySlugs": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/StrategySlug"
+                            },
+                            "description": "Strategy slugs that the account can use. If undefined, the account can use all configured strategy slugs. Slugs are composed as `<series>.<branch>`."
+                        },
+                        "defaultRiskProfileId": {
+                            "type": "string",
+                            "description": "Generic risk profile selected when the strategy type has no configured preferred profile."
+                        },
+                        "maxLossPerDay": {
+                            "$ref": "#/definitions/ICompositeValue",
+                            "description": "Optional account-specific replacement for trader.defaultMaxLossPerDay. Fixed values use account currency; percentage values use risk-day opening equity adjusted for nontrading cash flows. Historical and Live execution block subsequent entries after an observed breach without liquidating positions or canceling accepted orders. A strategy risk override cannot change this account-wide limit."
+                        },
+                        "riskOverrides": {
+                            "$ref": "#/definitions/ILiveRiskOverrides",
+                            "description": "Final field-level overrides applied to every Live strategy after static strategy configuration."
+                        },
+                        "tax": {
+                            "type": "object",
+                            "properties": {
+                                "profileId": {
+                                    "type": "string",
+                                    "description": "Country-level tax profile id"
+                                },
+                                "collectionMode": {
+                                    "$ref": "#/definitions/TaxCollectionMode",
+                                    "description": "Universal collection mode used to decide how tax cash is paid"
+                                }
+                            },
+                            "required": [
+                                "profileId",
+                                "collectionMode"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Optional tax accounting configuration"
+                        },
+                        "initialMarginPerContract": {
+                            "type": "object",
+                            "properties": {
+                                "long": {
+                                    "$ref": "#/definitions/ICompositeGroupPerInstrument"
+                                },
+                                "short": {
+                                    "$ref": "#/definitions/ICompositeGroupPerInstrument"
+                                }
+                            },
+                            "additionalProperties": false,
+                            "description": "Initial margin requirement per contract side; fixed values are account-currency amounts and `perc` values are ratios of local contract notional."
+                        },
+                        "maintenanceMarginPerContract": {
+                            "type": "object",
+                            "properties": {
+                                "long": {
+                                    "$ref": "#/definitions/ICompositeGroupPerInstrument"
+                                },
+                                "short": {
+                                    "$ref": "#/definitions/ICompositeGroupPerInstrument"
+                                }
+                            },
+                            "additionalProperties": false,
+                            "description": "Maintenance margin requirement per contract side; fixed values are account-currency amounts and `perc` values are ratios of local contract notional."
+                        },
+                        "exchangeCommission": {
+                            "$ref": "#/definitions/ICompositeGroup",
+                            "description": "Commission applied when converting from source currency to account currency"
+                        },
+                        "commissionPerOrder": {
+                            "$ref": "#/definitions/ICompositeGroupPerInstrument",
+                            "description": "Commission per order side (charged twice for round-trip)"
+                        },
+                        "commissionPerContract": {
+                            "$ref": "#/definitions/ICompositeGroupPerInstrument",
+                            "description": "Commission per contract"
+                        },
+                        "allowMarketOrdersInExtendedHours": {
+                            "type": "boolean",
+                            "description": "Allow market orders in extended hours sessions"
+                        }
+                    },
+                    "required": [
+                        "currency",
+                        "defaultRiskProfileId"
+                    ],
+                    "additionalProperties": false
+                },
+                "allowShorting": {
+                    "type": "boolean",
+                    "description": "Whether newly created simulated accounts may open short exposure."
+                },
+                "source": {
+                    "type": "string",
+                    "const": "provider"
+                }
+            },
+            "required": [
+                "accountTemplate",
+                "allowShorting",
+                "id",
+                "port",
+                "simulationProfile",
+                "source"
+            ],
+            "additionalProperties": false,
+            "description": "Follow source timestamps continuously; instruments are admitted when requested."
+        },
+        "ISimBrokerServiceProfile": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Human-readable identity retained with the complete resolved policy.",
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"
+                },
+                "slippage": {
+                    "$ref": "#/definitions/ICompositeDynamicValue"
+                },
+                "randomness": {
+                    "type": "number",
+                    "description": "Probability that an ordinary order receives one injected execution scenario, not its severity.",
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "seed": {
+                    "type": "string",
+                    "description": "Stable experiment seed; account and economic order coordinates isolate deterministic draws.",
+                    "minLength": 1,
+                    "maxLength": 128
+                },
+                "spread": {
+                    "$ref": "#/definitions/ICompositeDynamicValue"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "id",
+                "randomness",
+                "seed"
+            ],
+            "description": "Standalone policy: full bar-volume capacity is engine-owned; quote-based spread is unavailable."
+        },
+        "ICompositeDynamicValue": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/ICompositeValue"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "const": "dynamic"
+                        }
+                    },
+                    "required": [
+                        "type"
+                    ],
+                    "additionalProperties": false
+                }
+            ]
+        },
+        "ICompositeValue": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "type": "number",
+                    "description": "Non-negative magnitude. With type \"perc\", this is a ratio from 0 to 1 resolved against the basis documented by the owning parameter; otherwise it uses that parameter's fixed unit.",
+                    "minimum": 0
+                },
+                "type": {
+                    "$ref": "#/definitions/IValueKind",
+                    "description": "Value interpretation: \"fixed\" uses the owning parameter's unit and \"perc\" uses its documented basis. Defaults to \"fixed\"."
+                }
+            },
+            "required": [
+                "value"
+            ],
+            "additionalProperties": false
+        },
+        "IValueKind": {
+            "type": "string",
+            "enum": [
+                "fixed",
+                "perc"
+            ]
+        },
+        "StrategySlug": {
+            "type": "string",
+            "const": "argo.quality-wide-target",
+            "description": "Public production strategy slug type."
+        },
+        "ILiveRiskOverrides": {
+            "type": "object",
+            "properties": {
+                "hv": {
+                    "type": "object",
+                    "properties": {
+                        "bands": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "riskMultiplier": {
+                                        "type": "number"
+                                    },
+                                    "threshold": {
+                                        "type": [
+                                            "number",
+                                            "null"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "riskMultiplier",
+                                    "threshold"
+                                ],
+                                "additionalProperties": false
+                            }
+                        },
+                        "lookbackDays": {
+                            "type": "number"
+                        },
+                        "shock": {
+                            "type": "number"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "maxCapitalPerTrade": {
+                    "$ref": "#/definitions/ICompositeValue"
+                },
+                "maxDailyVolumeParticipationPerTrade": {
+                    "type": "number"
+                },
+                "maxDrawdownPercPerDay": {
+                    "type": "number"
+                },
+                "maxExecutionBarGapFactor": {
+                    "type": "number"
+                },
+                "maxRiskPercPerTrade": {
+                    "type": "number"
+                },
+                "minCapitalPerTrade": {
+                    "$ref": "#/definitions/ICompositeValue"
+                },
+                "minRecentExecutionBars": {
+                    "type": "number"
+                },
+                "minSignalScore": {
+                    "type": "number"
+                }
+            },
+            "additionalProperties": false,
+            "description": "Account-owned final overrides exposed by the Live risk editor."
+        },
+        "TaxCollectionMode": {
+            "type": "string",
+            "enum": [
+                "self_assessed",
+                "withheld_by_intermediary",
+                "none"
+            ]
+        },
+        "ICompositeGroupPerInstrument": {
+            "type": "object",
+            "additionalProperties": {
+                "$ref": "#/definitions/ICompositeGroup",
+                "description": "Use symbol, instrument type or currency as key (E.g. AAPL, future, USD). Use `*` for default values"
+            },
+            "description": "Symbol or instrument type values"
+        },
+        "ICompositeGroup": {
+            "type": "object",
+            "properties": {
+                "values": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ICompositeValue"
+                    }
+                },
+                "minimum": {
+                    "$ref": "#/definitions/ICompositeValue"
+                },
+                "maximum": {
+                    "$ref": "#/definitions/ICompositeValue"
+                }
+            },
+            "required": [
+                "values"
+            ],
+            "additionalProperties": false
+        },
+        "ISimBrokerHistoricalConfig": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Filesystem-safe identity; changing it starts a separate environment.",
+                    "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                },
+                "port": {
+                    "type": "number",
+                    "description": "Loopback web/API port.",
+                    "minimum": 1,
+                    "maximum": 65535
+                },
+                "simulationProfile": {
+                    "$ref": "#/definitions/ISimBrokerServiceProfile"
+                },
+                "accountTemplate": {
+                    "type": "object",
+                    "properties": {
+                        "currency": {
+                            "type": "string",
+                            "description": "Account base currency; casing is normalized after schema validation."
+                        },
+                        "notificationsEnabled": {
+                            "type": "boolean",
+                            "description": "Whether this account may deliver notifications through globally configured channels; absence means disabled"
+                        },
+                        "soundsEnabled": {
+                            "type": "boolean",
+                            "description": "Whether the Live client may play position lifecycle sounds for this account; absence means disabled"
+                        },
+                        "instrumentPoolIds": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "Instrument pool ids that the account can use. If undefined, the account can use all instruments available in the context."
+                        },
+                        "strategySlugs": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/StrategySlug"
+                            },
+                            "description": "Strategy slugs that the account can use. If undefined, the account can use all configured strategy slugs. Slugs are composed as `<series>.<branch>`."
+                        },
+                        "defaultRiskProfileId": {
+                            "type": "string",
+                            "description": "Generic risk profile selected when the strategy type has no configured preferred profile."
+                        },
+                        "maxLossPerDay": {
+                            "$ref": "#/definitions/ICompositeValue",
+                            "description": "Optional account-specific replacement for trader.defaultMaxLossPerDay. Fixed values use account currency; percentage values use risk-day opening equity adjusted for nontrading cash flows. Historical and Live execution block subsequent entries after an observed breach without liquidating positions or canceling accepted orders. A strategy risk override cannot change this account-wide limit."
+                        },
+                        "riskOverrides": {
+                            "$ref": "#/definitions/ILiveRiskOverrides",
+                            "description": "Final field-level overrides applied to every Live strategy after static strategy configuration."
+                        },
+                        "tax": {
+                            "type": "object",
+                            "properties": {
+                                "profileId": {
+                                    "type": "string",
+                                    "description": "Country-level tax profile id"
+                                },
+                                "collectionMode": {
+                                    "$ref": "#/definitions/TaxCollectionMode",
+                                    "description": "Universal collection mode used to decide how tax cash is paid"
+                                }
+                            },
+                            "required": [
+                                "profileId",
+                                "collectionMode"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Optional tax accounting configuration"
+                        },
+                        "initialMarginPerContract": {
+                            "type": "object",
+                            "properties": {
+                                "long": {
+                                    "$ref": "#/definitions/ICompositeGroupPerInstrument"
+                                },
+                                "short": {
+                                    "$ref": "#/definitions/ICompositeGroupPerInstrument"
+                                }
+                            },
+                            "additionalProperties": false,
+                            "description": "Initial margin requirement per contract side; fixed values are account-currency amounts and `perc` values are ratios of local contract notional."
+                        },
+                        "maintenanceMarginPerContract": {
+                            "type": "object",
+                            "properties": {
+                                "long": {
+                                    "$ref": "#/definitions/ICompositeGroupPerInstrument"
+                                },
+                                "short": {
+                                    "$ref": "#/definitions/ICompositeGroupPerInstrument"
+                                }
+                            },
+                            "additionalProperties": false,
+                            "description": "Maintenance margin requirement per contract side; fixed values are account-currency amounts and `perc` values are ratios of local contract notional."
+                        },
+                        "exchangeCommission": {
+                            "$ref": "#/definitions/ICompositeGroup",
+                            "description": "Commission applied when converting from source currency to account currency"
+                        },
+                        "commissionPerOrder": {
+                            "$ref": "#/definitions/ICompositeGroupPerInstrument",
+                            "description": "Commission per order side (charged twice for round-trip)"
+                        },
+                        "commissionPerContract": {
+                            "$ref": "#/definitions/ICompositeGroupPerInstrument",
+                            "description": "Commission per contract"
+                        },
+                        "allowMarketOrdersInExtendedHours": {
+                            "type": "boolean",
+                            "description": "Allow market orders in extended hours sessions"
+                        }
+                    },
+                    "required": [
+                        "currency",
+                        "defaultRiskProfileId"
+                    ],
+                    "additionalProperties": false
+                },
+                "allowShorting": {
+                    "type": "boolean",
+                    "description": "Whether newly created simulated accounts may open short exposure."
+                },
+                "source": {
+                    "type": "string",
+                    "const": "historical"
+                },
+                "startDate": {
+                    "type": "string",
+                    "description": "Source UTC dates, inclusive. Provider timestamps remain unchanged."
+                },
+                "endDate": {
+                    "type": "string"
+                },
+                "symbols": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "playbackIntervalMs": {
+                    "type": "number",
+                    "description": "Wall-clock pacing of historical minutes, unrelated to provider delay.",
+                    "minimum": 100,
+                    "maximum": 60000
+                }
+            },
+            "required": [
+                "accountTemplate",
+                "allowShorting",
+                "endDate",
+                "id",
+                "playbackIntervalMs",
+                "port",
+                "simulationProfile",
+                "source",
+                "startDate",
+                "symbols"
+            ],
+            "additionalProperties": false,
+            "description": "Historical replay alone owns an explicit period, universe and wall-clock pacing."
         },
         "IOperationalTraderConfig": {
             "type": "object",
@@ -184,11 +709,6 @@
             ],
             "additionalProperties": false,
             "description": "Server defaults select only published production strategies; frozen day inputs resolve their keys."
-        },
-        "StrategySlug": {
-            "type": "string",
-            "const": "argo.quality-wide-target",
-            "description": "Public production strategy slug type."
         },
         "IConfigInstrumentUniverse": {
             "type": "object",
@@ -333,31 +853,6 @@
             ],
             "additionalProperties": false,
             "description": "Historical volatility-based risk rule configuration"
-        },
-        "ICompositeValue": {
-            "type": "object",
-            "properties": {
-                "value": {
-                    "type": "number",
-                    "description": "Non-negative magnitude. With type \"perc\", this is a ratio from 0 to 1 resolved against the basis documented by the owning parameter; otherwise it uses that parameter's fixed unit.",
-                    "minimum": 0
-                },
-                "type": {
-                    "$ref": "#/definitions/IValueKind",
-                    "description": "Value interpretation: \"fixed\" uses the owning parameter's unit and \"perc\" uses its documented basis. Defaults to \"fixed\"."
-                }
-            },
-            "required": [
-                "value"
-            ],
-            "additionalProperties": false
-        },
-        "IValueKind": {
-            "type": "string",
-            "enum": [
-                "fixed",
-                "perc"
-            ]
         },
         "IConfigLiveStrategyRiskOverride": {
             "type": "object",
