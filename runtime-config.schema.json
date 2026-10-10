@@ -30,22 +30,10 @@
                         "$ref": "#/definitions/IConfigRiskProfile"
                     }
                 },
-                "strategyRiskOverrides": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/IConfigStrategyRiskOverride"
-                    }
-                },
                 "targetExitTolerancePerc": {
                     "type": "number",
                     "minimum": 0,
                     "maximum": 1
-                },
-                "strategyTargetExitOverrides": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/IConfigStrategyTargetExitOverride"
-                    }
                 },
                 "defaultMaxLossPerDay": {
                     "$ref": "#/definitions/ICompositeValue"
@@ -79,8 +67,6 @@
                 "riskProfiles",
                 "simulationProfile",
                 "strategies",
-                "strategyRiskOverrides",
-                "strategyTargetExitOverrides",
                 "targetExitTolerancePerc"
             ],
             "additionalProperties": false
@@ -246,153 +232,6 @@
                 "fixed",
                 "perc"
             ]
-        },
-        "IConfigStrategyRiskOverride": {
-            "type": "object",
-            "properties": {
-                "strategyProfileId": {
-                    "$ref": "#/definitions/StrategyRiskProfileId"
-                },
-                "preferredRiskProfileId": {
-                    "type": "string"
-                },
-                "maxRiskPercPerTrade": {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 1
-                },
-                "maxDrawdownPercPerDay": {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 1
-                },
-                "hv": {
-                    "$ref": "#/definitions/IConfigHVRuleOverride"
-                },
-                "backtest": {
-                    "$ref": "#/definitions/IConfigRiskBacktestProfile"
-                },
-                "minCapitalPerTrade": {
-                    "$ref": "#/definitions/ICompositeValue"
-                },
-                "maxCapitalPerTrade": {
-                    "$ref": "#/definitions/ICompositeValue"
-                },
-                "maxSpreadPerTrade": {
-                    "$ref": "#/definitions/ICompositeValue"
-                },
-                "maxDailyVolumeParticipationPerTrade": {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 1
-                },
-                "minRecentExecutionBars": {
-                    "type": "number",
-                    "minimum": 0
-                },
-                "maxExecutionBarGapFactor": {
-                    "type": "number",
-                    "exclusiveMinimum": 0
-                },
-                "minSignalScore": {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 1
-                }
-            },
-            "required": [
-                "strategyProfileId"
-            ],
-            "additionalProperties": false
-        },
-        "StrategyRiskProfileId": {
-            "type": "string",
-            "enum": [
-                "default",
-                "eventDriven",
-                "scalping.trend",
-                "scalping.breakout",
-                "scalping.meanReversion",
-                "scalping.range",
-                "scalping.liquidity",
-                "scalping.volatility",
-                "intraday.trend",
-                "intraday.breakout",
-                "intraday.meanReversion",
-                "intraday.range",
-                "intraday.liquidity",
-                "intraday.futures",
-                "intraday.volatility",
-                "swing.trend",
-                "swing.breakout",
-                "swing.meanReversion",
-                "swing.range",
-                "swing.liquidity",
-                "swing.volatility",
-                "position.trend",
-                "position.breakout",
-                "position.meanReversion",
-                "position.range",
-                "position.liquidity",
-                "position.volatility"
-            ]
-        },
-        "IConfigHVRuleOverride": {
-            "type": "object",
-            "properties": {
-                "bands": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "threshold": {
-                                "type": [
-                                    "number",
-                                    "null"
-                                ],
-                                "minimum": 0
-                            },
-                            "riskMultiplier": {
-                                "type": "number",
-                                "minimum": 0,
-                                "maximum": 1
-                            }
-                        },
-                        "required": [
-                            "threshold",
-                            "riskMultiplier"
-                        ],
-                        "additionalProperties": false
-                    }
-                },
-                "lookbackDays": {
-                    "type": "number",
-                    "minimum": 1
-                },
-                "shock": {
-                    "type": "number",
-                    "exclusiveMinimum": 0
-                }
-            },
-            "additionalProperties": false
-        },
-        "IConfigStrategyTargetExitOverride": {
-            "type": "object",
-            "properties": {
-                "strategyId": {
-                    "type": "string"
-                },
-                "tolerancePerc": {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 1
-                }
-            },
-            "required": [
-                "strategyId",
-                "tolerancePerc"
-            ],
-            "additionalProperties": false
         },
         "IConfigApproachSignals": {
             "type": "object",
@@ -575,22 +414,10 @@
                         "$ref": "#/definitions/IConfigLiveRiskProfile"
                     }
                 },
-                "strategyRiskOverrides": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/IConfigLiveStrategyRiskOverride"
-                    }
-                },
                 "targetExitTolerancePerc": {
                     "type": "number",
                     "minimum": 0,
                     "maximum": 1
-                },
-                "strategyTargetExitOverrides": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/IConfigStrategyTargetExitOverride"
-                    }
                 },
                 "defaultMaxLossPerDay": {
                     "$ref": "#/definitions/ICompositeValue"
@@ -633,8 +460,6 @@
                 "notifications",
                 "riskProfiles",
                 "strategies",
-                "strategyRiskOverrides",
-                "strategyTargetExitOverrides",
                 "targetExitTolerancePerc"
             ],
             "additionalProperties": false
@@ -691,61 +516,6 @@
                 "id",
                 "maxDrawdownPercPerDay",
                 "maxRiskPercPerTrade"
-            ]
-        },
-        "IConfigLiveStrategyRiskOverride": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "strategyProfileId": {
-                    "$ref": "#/definitions/StrategyRiskProfileId"
-                },
-                "preferredRiskProfileId": {
-                    "type": "string"
-                },
-                "maxRiskPercPerTrade": {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 1
-                },
-                "maxDrawdownPercPerDay": {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 1
-                },
-                "hv": {
-                    "$ref": "#/definitions/IConfigHVRuleOverride"
-                },
-                "minCapitalPerTrade": {
-                    "$ref": "#/definitions/ICompositeValue"
-                },
-                "maxCapitalPerTrade": {
-                    "$ref": "#/definitions/ICompositeValue"
-                },
-                "maxSpreadPerTrade": {
-                    "$ref": "#/definitions/ICompositeValue"
-                },
-                "maxDailyVolumeParticipationPerTrade": {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 1
-                },
-                "minRecentExecutionBars": {
-                    "type": "number",
-                    "minimum": 0
-                },
-                "maxExecutionBarGapFactor": {
-                    "type": "number",
-                    "exclusiveMinimum": 0
-                },
-                "minSignalScore": {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 1
-                }
-            },
-            "required": [
-                "strategyProfileId"
             ]
         },
         "IConfigLiveTrading": {

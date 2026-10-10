@@ -113,27 +113,13 @@
                     "items": {
                         "$ref": "#/definitions/IConfigRiskProfile"
                     },
-                    "description": "Complete reusable entry-risk profiles selectable by accounts. The selected profile supplies the base values before optional strategyRiskOverrides entries."
-                },
-                "strategyRiskOverrides": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/IConfigStrategyRiskOverride"
-                    },
-                    "description": "Optional risk overrides keyed by canonical strategy type. Each entry may prefer a generic risk profile and replace individual fields after generic profile selection."
+                    "description": "Complete reusable entry-risk profiles selectable by accounts."
                 },
                 "targetExitTolerancePerc": {
                     "type": "number",
                     "description": "Maximum adverse retracement from a touched target at the completed-minute close. Expressed as a ratio of the raw target price: 0.002 means 0.2%. This controls Market submission, not the eventual fill price. Zero requires a close at or beyond target.",
                     "minimum": 0,
                     "maximum": 1
-                },
-                "strategyTargetExitOverrides": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/IConfigStrategyTargetExitOverride"
-                    },
-                    "description": "Optional target tolerance replacements keyed by the exact versioned strategy id."
                 },
                 "defaultMaxLossPerDay": {
                     "$ref": "#/definitions/ICompositeValue",
@@ -172,8 +158,6 @@
                 "riskProfiles",
                 "simulationProfile",
                 "strategies",
-                "strategyRiskOverrides",
-                "strategyTargetExitOverrides",
                 "targetExitTolerancePerc"
             ],
             "additionalProperties": false,
@@ -212,7 +196,7 @@
             "properties": {
                 "id": {
                     "type": "string",
-                    "description": "Canonical generic profile id referenced by account default and allowed profile identifiers."
+                    "description": "Complete profile id selected by an account or an explicit Backtest run."
                 },
                 "maxRiskPercPerTrade": {
                     "type": "number",
@@ -368,176 +352,6 @@
                 "fixed",
                 "perc"
             ]
-        },
-        "IConfigStrategyRiskOverride": {
-            "type": "object",
-            "properties": {
-                "strategyProfileId": {
-                    "$ref": "#/definitions/StrategyRiskProfileId",
-                    "description": "Canonical strategy-type id referenced by Strategy.RiskProfileId and used to find this optional override."
-                },
-                "preferredRiskProfileId": {
-                    "type": "string",
-                    "description": "Generic risk profile requested before this strategy risk override is applied. A present preference is selected instead of the account default before field-level overrides are applied."
-                },
-                "maxRiskPercPerTrade": {
-                    "type": "number",
-                    "description": "Optional replacement for the selected profile's maximum loss budget per trade, where 1 is 100% of available capital before signal-confidence and HV reductions.",
-                    "minimum": 0,
-                    "maximum": 1
-                },
-                "maxDrawdownPercPerDay": {
-                    "type": "number",
-                    "description": "Optional replacement for the selected profile's soft risk-day drawdown ratio. The effective value blocks new entries after breach and does not liquidate positions.",
-                    "minimum": 0,
-                    "maximum": 1
-                },
-                "hv": {
-                    "$ref": "#/definitions/IConfigHVRuleOverride",
-                    "description": "Optional field-level historical-volatility sizing overrides."
-                },
-                "backtest": {
-                    "$ref": "#/definitions/IConfigRiskBacktestProfile",
-                    "description": "Optional field-level backtest execution-friction overrides."
-                },
-                "minCapitalPerTrade": {
-                    "$ref": "#/definitions/ICompositeValue",
-                    "description": "Optional replacement for the minimum final allocation required to keep an entry order."
-                },
-                "maxCapitalPerTrade": {
-                    "$ref": "#/definitions/ICompositeValue",
-                    "description": "Optional replacement for the maximum allocation per entry after risk sizing. Percentage values use available capital."
-                },
-                "maxSpreadPerTrade": {
-                    "$ref": "#/definitions/ICompositeValue",
-                    "description": "Optional replacement for the maximum spread accepted at the executable order price."
-                },
-                "maxDailyVolumeParticipationPerTrade": {
-                    "type": "number",
-                    "description": "Optional replacement for the maximum share of the previous completed daily bar volume requested by one entry.",
-                    "minimum": 0,
-                    "maximum": 1
-                },
-                "minRecentExecutionBars": {
-                    "type": "number",
-                    "description": "Optional replacement for the minimum number of recent completed one-minute bars with positive volume required before entry.",
-                    "minimum": 0
-                },
-                "maxExecutionBarGapFactor": {
-                    "type": "number",
-                    "description": "Optional replacement for the maximum gap between recent completed one-minute bars, as a multiple of one minute.",
-                    "exclusiveMinimum": 0
-                },
-                "minSignalScore": {
-                    "type": "number",
-                    "description": "Optional replacement for the minimum confidence × causal strategy rank accepted before sizing.",
-                    "minimum": 0,
-                    "maximum": 1
-                }
-            },
-            "required": [
-                "strategyProfileId"
-            ],
-            "additionalProperties": false,
-            "description": "Optional risk overrides keyed by a canonical strategy-type profile."
-        },
-        "StrategyRiskProfileId": {
-            "type": "string",
-            "enum": [
-                "default",
-                "eventDriven",
-                "scalping.trend",
-                "scalping.breakout",
-                "scalping.meanReversion",
-                "scalping.range",
-                "scalping.liquidity",
-                "scalping.volatility",
-                "intraday.trend",
-                "intraday.breakout",
-                "intraday.meanReversion",
-                "intraday.range",
-                "intraday.liquidity",
-                "intraday.futures",
-                "intraday.volatility",
-                "swing.trend",
-                "swing.breakout",
-                "swing.meanReversion",
-                "swing.range",
-                "swing.liquidity",
-                "swing.volatility",
-                "position.trend",
-                "position.breakout",
-                "position.meanReversion",
-                "position.range",
-                "position.liquidity",
-                "position.volatility"
-            ]
-        },
-        "IConfigHVRuleOverride": {
-            "type": "object",
-            "properties": {
-                "bands": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "threshold": {
-                                "type": [
-                                    "number",
-                                    "null"
-                                ],
-                                "description": "Inclusive daily-HV upper bound for this band; null is the required final catch-all.",
-                                "minimum": 0
-                            },
-                            "riskMultiplier": {
-                                "type": "number",
-                                "description": "Multiplier applied to the per-trade loss budget when observed daily HV falls in this band. It may reduce the base budget but cannot increase it above the configured maximum.",
-                                "minimum": 0,
-                                "maximum": 1
-                            }
-                        },
-                        "required": [
-                            "threshold",
-                            "riskMultiplier"
-                        ],
-                        "additionalProperties": false
-                    },
-                    "description": "Replacement ordered volatility bands; omission inherits the selected generic profile bands."
-                },
-                "lookbackDays": {
-                    "type": "number",
-                    "description": "Replacement daily-bar lookback; omission inherits the selected generic profile lookback.",
-                    "minimum": 1
-                },
-                "shock": {
-                    "type": "number",
-                    "description": "Replacement HV shock multiple; omission inherits the selected generic profile shock.",
-                    "exclusiveMinimum": 0
-                }
-            },
-            "additionalProperties": false,
-            "description": "Field-level historical-volatility values inside one strategy risk override."
-        },
-        "IConfigStrategyTargetExitOverride": {
-            "type": "object",
-            "properties": {
-                "strategyId": {
-                    "type": "string",
-                    "description": "Exact strategy id from its catalog, including version (for example argo.quality-wide-target@v1)."
-                },
-                "tolerancePerc": {
-                    "type": "number",
-                    "description": "Adverse tolerance as a ratio of raw target price; zero requires a close at or beyond target.",
-                    "minimum": 0,
-                    "maximum": 1
-                }
-            },
-            "required": [
-                "strategyId",
-                "tolerancePerc"
-            ],
-            "additionalProperties": false,
-            "description": "Strategy-specific replacement for the common completed-minute target tolerance."
         },
         "IConfigApproachSignals": {
             "type": "object",

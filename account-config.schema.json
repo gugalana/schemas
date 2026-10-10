@@ -3,145 +3,262 @@
     "$ref": "#/definitions/ITradingAccountConfigInput",
     "definitions": {
         "ITradingAccountConfigInput": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string",
-                    "description": "Account id"
-                },
-                "type": {
-                    "$ref": "#/definitions/TradingAccountType",
-                    "description": "Account type"
-                },
-                "active": {
-                    "type": "boolean",
-                    "description": "Whether the account is active"
-                },
-                "notificationsEnabled": {
-                    "type": "boolean",
-                    "description": "Whether this account may deliver notifications through globally configured channels; absence means disabled"
-                },
-                "soundsEnabled": {
-                    "type": "boolean",
-                    "description": "Whether the Live client may play position lifecycle sounds for this account; absence means disabled"
-                },
-                "instrumentPoolIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "description": "Instrument pool ids that the account can use. If undefined, the account can use all instruments available in the context."
-                },
-                "strategySlugs": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/StrategySlug"
-                    },
-                    "description": "Strategy slugs that the account can use. If undefined, the account can use all configured strategy slugs. Slugs are composed as `<series>.<branch>`."
-                },
-                "defaultRiskProfileId": {
-                    "type": "string",
-                    "description": "Generic risk profile selected when the strategy type has no configured preferred profile."
-                },
-                "maxLossPerDay": {
-                    "$ref": "#/definitions/ICompositeValue",
-                    "description": "Optional account-specific replacement for trader.defaultMaxLossPerDay. Fixed values use account currency; percentage values use risk-day opening equity adjusted for nontrading cash flows. Historical and Live execution block subsequent entries after an observed breach without liquidating positions or canceling accepted orders. A strategy risk override cannot change this account-wide limit."
-                },
-                "riskOverrides": {
-                    "$ref": "#/definitions/ILiveRiskOverrides",
-                    "description": "Final field-level overrides applied to every Live strategy after static strategy configuration."
-                },
-                "tax": {
+            "anyOf": [
+                {
                     "type": "object",
+                    "additionalProperties": false,
                     "properties": {
-                        "profileId": {
-                            "type": "string",
-                            "description": "Country-level tax profile id"
+                        "currency": {
+                            "type": "string"
                         },
-                        "collectionMode": {
-                            "$ref": "#/definitions/TaxCollectionMode",
-                            "description": "Universal collection mode used to decide how tax cash is paid"
+                        "type": {
+                            "type": "string",
+                            "const": "backtest"
+                        },
+                        "id": {
+                            "type": "string",
+                            "description": "Account id"
+                        },
+                        "active": {
+                            "type": "boolean",
+                            "description": "Whether the account is active"
+                        },
+                        "notificationsEnabled": {
+                            "type": "boolean",
+                            "description": "Whether this account may deliver notifications through globally configured channels; absence means disabled"
+                        },
+                        "soundsEnabled": {
+                            "type": "boolean",
+                            "description": "Whether the Live client may play position lifecycle sounds for this account; absence means disabled"
+                        },
+                        "instrumentPoolIds": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "Instrument pool ids that the account can use. If undefined, the account can use all instruments available in the context."
+                        },
+                        "strategySlugs": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/StrategySlug"
+                            },
+                            "description": "Strategy slugs that the account can use. If undefined, the account can use all configured strategy slugs. Slugs are composed as `<series>.<branch>`."
+                        },
+                        "defaultRiskProfileId": {
+                            "type": "string",
+                            "description": "Complete risk profile selected for this account."
+                        },
+                        "maxLossPerDay": {
+                            "$ref": "#/definitions/ICompositeValue",
+                            "description": "Optional Backtest account replacement for trader.defaultMaxLossPerDay. Fixed values use account currency; percentage values use risk-day opening equity adjusted for nontrading cash flows. Historical and Live execution block subsequent entries after an observed breach without liquidating positions or canceling accepted orders. A selected entry-risk profile cannot change this account-wide limit."
+                        },
+                        "tax": {
+                            "type": "object",
+                            "properties": {
+                                "profileId": {
+                                    "type": "string",
+                                    "description": "Country-level tax profile id"
+                                },
+                                "collectionMode": {
+                                    "$ref": "#/definitions/TaxCollectionMode",
+                                    "description": "Universal collection mode used to decide how tax cash is paid"
+                                }
+                            },
+                            "required": [
+                                "profileId",
+                                "collectionMode"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Optional tax accounting configuration"
+                        },
+                        "initialMarginPerContract": {
+                            "type": "object",
+                            "properties": {
+                                "long": {
+                                    "$ref": "#/definitions/ICompositeGroupPerInstrument"
+                                },
+                                "short": {
+                                    "$ref": "#/definitions/ICompositeGroupPerInstrument"
+                                }
+                            },
+                            "additionalProperties": false,
+                            "description": "Initial margin requirement per contract side; fixed values are account-currency amounts and `perc` values are ratios of local contract notional."
+                        },
+                        "maintenanceMarginPerContract": {
+                            "type": "object",
+                            "properties": {
+                                "long": {
+                                    "$ref": "#/definitions/ICompositeGroupPerInstrument"
+                                },
+                                "short": {
+                                    "$ref": "#/definitions/ICompositeGroupPerInstrument"
+                                }
+                            },
+                            "additionalProperties": false,
+                            "description": "Maintenance margin requirement per contract side; fixed values are account-currency amounts and `perc` values are ratios of local contract notional."
+                        },
+                        "exchangeCommission": {
+                            "$ref": "#/definitions/ICompositeGroup",
+                            "description": "Commission applied when converting from source currency to account currency"
+                        },
+                        "commissionPerOrder": {
+                            "$ref": "#/definitions/ICompositeGroupPerInstrument",
+                            "description": "Commission per order side (charged twice for round-trip)"
+                        },
+                        "commissionPerContract": {
+                            "$ref": "#/definitions/ICompositeGroupPerInstrument",
+                            "description": "Commission per contract"
+                        },
+                        "allowMarketOrdersInExtendedHours": {
+                            "type": "boolean",
+                            "description": "Allow market orders in extended hours sessions"
+                        },
+                        "brokerAccount": {
+                            "$ref": "#/definitions/IBrokerAccount",
+                            "description": "Linked broker account information"
+                        },
+                        "$schema": {
+                            "type": "string"
                         }
                     },
                     "required": [
-                        "profileId",
-                        "collectionMode"
-                    ],
-                    "additionalProperties": false,
-                    "description": "Optional tax accounting configuration"
+                        "active",
+                        "brokerAccount",
+                        "currency",
+                        "defaultRiskProfileId",
+                        "id",
+                        "type"
+                    ]
                 },
-                "initialMarginPerContract": {
+                {
                     "type": "object",
+                    "additionalProperties": false,
                     "properties": {
-                        "long": {
-                            "$ref": "#/definitions/ICompositeGroupPerInstrument"
+                        "currency": {
+                            "type": "string"
                         },
-                        "short": {
-                            "$ref": "#/definitions/ICompositeGroupPerInstrument"
+                        "type": {
+                            "type": "string",
+                            "enum": [
+                                "paper",
+                                "live"
+                            ]
+                        },
+                        "id": {
+                            "type": "string",
+                            "description": "Account id"
+                        },
+                        "active": {
+                            "type": "boolean",
+                            "description": "Whether the account is active"
+                        },
+                        "notificationsEnabled": {
+                            "type": "boolean",
+                            "description": "Whether this account may deliver notifications through globally configured channels; absence means disabled"
+                        },
+                        "soundsEnabled": {
+                            "type": "boolean",
+                            "description": "Whether the Live client may play position lifecycle sounds for this account; absence means disabled"
+                        },
+                        "instrumentPoolIds": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "Instrument pool ids that the account can use. If undefined, the account can use all instruments available in the context."
+                        },
+                        "strategySlugs": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/StrategySlug"
+                            },
+                            "description": "Strategy slugs that the account can use. If undefined, the account can use all configured strategy slugs. Slugs are composed as `<series>.<branch>`."
+                        },
+                        "defaultRiskProfileId": {
+                            "type": "string",
+                            "description": "Complete risk profile selected for this account."
+                        },
+                        "tax": {
+                            "type": "object",
+                            "properties": {
+                                "profileId": {
+                                    "type": "string",
+                                    "description": "Country-level tax profile id"
+                                },
+                                "collectionMode": {
+                                    "$ref": "#/definitions/TaxCollectionMode",
+                                    "description": "Universal collection mode used to decide how tax cash is paid"
+                                }
+                            },
+                            "required": [
+                                "profileId",
+                                "collectionMode"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Optional tax accounting configuration"
+                        },
+                        "initialMarginPerContract": {
+                            "type": "object",
+                            "properties": {
+                                "long": {
+                                    "$ref": "#/definitions/ICompositeGroupPerInstrument"
+                                },
+                                "short": {
+                                    "$ref": "#/definitions/ICompositeGroupPerInstrument"
+                                }
+                            },
+                            "additionalProperties": false,
+                            "description": "Initial margin requirement per contract side; fixed values are account-currency amounts and `perc` values are ratios of local contract notional."
+                        },
+                        "maintenanceMarginPerContract": {
+                            "type": "object",
+                            "properties": {
+                                "long": {
+                                    "$ref": "#/definitions/ICompositeGroupPerInstrument"
+                                },
+                                "short": {
+                                    "$ref": "#/definitions/ICompositeGroupPerInstrument"
+                                }
+                            },
+                            "additionalProperties": false,
+                            "description": "Maintenance margin requirement per contract side; fixed values are account-currency amounts and `perc` values are ratios of local contract notional."
+                        },
+                        "exchangeCommission": {
+                            "$ref": "#/definitions/ICompositeGroup",
+                            "description": "Commission applied when converting from source currency to account currency"
+                        },
+                        "commissionPerOrder": {
+                            "$ref": "#/definitions/ICompositeGroupPerInstrument",
+                            "description": "Commission per order side (charged twice for round-trip)"
+                        },
+                        "commissionPerContract": {
+                            "$ref": "#/definitions/ICompositeGroupPerInstrument",
+                            "description": "Commission per contract"
+                        },
+                        "allowMarketOrdersInExtendedHours": {
+                            "type": "boolean",
+                            "description": "Allow market orders in extended hours sessions"
+                        },
+                        "brokerAccount": {
+                            "$ref": "#/definitions/IBrokerAccount",
+                            "description": "Linked broker account information"
+                        },
+                        "$schema": {
+                            "type": "string"
                         }
                     },
-                    "additionalProperties": false,
-                    "description": "Initial margin requirement per contract side; fixed values are account-currency amounts and `perc` values are ratios of local contract notional."
-                },
-                "maintenanceMarginPerContract": {
-                    "type": "object",
-                    "properties": {
-                        "long": {
-                            "$ref": "#/definitions/ICompositeGroupPerInstrument"
-                        },
-                        "short": {
-                            "$ref": "#/definitions/ICompositeGroupPerInstrument"
-                        }
-                    },
-                    "additionalProperties": false,
-                    "description": "Maintenance margin requirement per contract side; fixed values are account-currency amounts and `perc` values are ratios of local contract notional."
-                },
-                "exchangeCommission": {
-                    "$ref": "#/definitions/ICompositeGroup",
-                    "description": "Commission applied when converting from source currency to account currency"
-                },
-                "commissionPerOrder": {
-                    "$ref": "#/definitions/ICompositeGroupPerInstrument",
-                    "description": "Commission per order side (charged twice for round-trip)"
-                },
-                "commissionPerContract": {
-                    "$ref": "#/definitions/ICompositeGroupPerInstrument",
-                    "description": "Commission per contract"
-                },
-                "allowMarketOrdersInExtendedHours": {
-                    "type": "boolean",
-                    "description": "Allow market orders in extended hours sessions"
-                },
-                "brokerAccount": {
-                    "$ref": "#/definitions/IBrokerAccount",
-                    "description": "Linked broker account information"
-                },
-                "$schema": {
-                    "type": "string"
-                },
-                "currency": {
-                    "type": "string",
-                    "description": "Account base currency; casing is normalized after schema validation."
+                    "required": [
+                        "active",
+                        "brokerAccount",
+                        "currency",
+                        "defaultRiskProfileId",
+                        "id",
+                        "type"
+                    ]
                 }
-            },
-            "required": [
-                "active",
-                "brokerAccount",
-                "currency",
-                "defaultRiskProfileId",
-                "id",
-                "type"
             ],
-            "additionalProperties": false,
             "description": "Trading account representation accepted at the external configuration boundary."
-        },
-        "TradingAccountType": {
-            "type": "string",
-            "enum": [
-                "backtest",
-                "paper",
-                "live"
-            ]
         },
         "StrategySlug": {
             "type": "string",
@@ -172,71 +289,6 @@
                 "fixed",
                 "perc"
             ]
-        },
-        "ILiveRiskOverrides": {
-            "type": "object",
-            "properties": {
-                "hv": {
-                    "type": "object",
-                    "properties": {
-                        "bands": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "riskMultiplier": {
-                                        "type": "number"
-                                    },
-                                    "threshold": {
-                                        "type": [
-                                            "number",
-                                            "null"
-                                        ]
-                                    }
-                                },
-                                "required": [
-                                    "riskMultiplier",
-                                    "threshold"
-                                ],
-                                "additionalProperties": false
-                            }
-                        },
-                        "lookbackDays": {
-                            "type": "number"
-                        },
-                        "shock": {
-                            "type": "number"
-                        }
-                    },
-                    "additionalProperties": false
-                },
-                "maxCapitalPerTrade": {
-                    "$ref": "#/definitions/ICompositeValue"
-                },
-                "maxDailyVolumeParticipationPerTrade": {
-                    "type": "number"
-                },
-                "maxDrawdownPercPerDay": {
-                    "type": "number"
-                },
-                "maxExecutionBarGapFactor": {
-                    "type": "number"
-                },
-                "maxRiskPercPerTrade": {
-                    "type": "number"
-                },
-                "minCapitalPerTrade": {
-                    "$ref": "#/definitions/ICompositeValue"
-                },
-                "minRecentExecutionBars": {
-                    "type": "number"
-                },
-                "minSignalScore": {
-                    "type": "number"
-                }
-            },
-            "additionalProperties": false,
-            "description": "Account-owned final overrides exposed by the Live risk editor."
         },
         "TaxCollectionMode": {
             "type": "string",
