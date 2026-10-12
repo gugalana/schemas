@@ -9,7 +9,7 @@
                     "type": "string"
                 },
                 "directories": {
-                    "$ref": "#/definitions/IDataDirectories",
+                    "$ref": "#/definitions/ILocalDataDirectories",
                     "description": "Explicit absolute archive locations shared by desktop and CLI."
                 },
                 "trader": {
@@ -65,7 +65,7 @@
             "additionalProperties": false,
             "description": "Shared local configuration used by the CLI and inherited by the desktop."
         },
-        "IDataDirectories": {
+        "ILocalDataDirectories": {
             "type": "object",
             "properties": {
                 "accounts": {
@@ -82,17 +82,21 @@
                 },
                 "operations": {
                     "type": "string"
+                },
+                "research": {
+                    "type": "string"
                 }
             },
             "required": [
                 "accounts",
-                "reference",
-                "market",
                 "journals",
-                "operations"
+                "market",
+                "operations",
+                "reference",
+                "research"
             ],
             "additionalProperties": false,
-            "description": "Independently located archives; only reference storage may be shared with a server."
+            "description": "Local research keeps its documents and economic journals under one selected owner."
         },
         "IBacktestTraderConfig": {
             "type": "object",
@@ -400,6 +404,10 @@
                 "journalKind": {
                     "$ref": "#/definitions/JournalKind",
                     "description": "Logical journal kind to assign to this backtest"
+                },
+                "researchStudyId": {
+                    "type": "string",
+                    "description": "Owning research identity for a research journal; unrelated to scientific readiness."
                 },
                 "initialCapital": {
                     "type": "number",

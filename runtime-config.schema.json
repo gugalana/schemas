@@ -272,6 +272,9 @@
                 "journalKind": {
                     "$ref": "#/definitions/JournalKind"
                 },
+                "researchStudyId": {
+                    "type": "string"
+                },
                 "initialCapital": {
                     "type": "number"
                 }
