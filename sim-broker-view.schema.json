@@ -1,10 +1,16 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/definitions/ISimBrokerAccountView",
+    "$ref": "#/definitions/ISimBrokerAccountSnapshot",
     "definitions": {
-        "ISimBrokerAccountView": {
+        "ISimBrokerAccountSnapshot": {
             "type": "object",
             "properties": {
+                "executionCosts": {
+                    "$ref": "#/definitions/IOrderExecutionCostModel"
+                },
+                "accounting": {
+                    "$ref": "#/definitions/ISimBrokerAccounting"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -31,55 +37,57 @@
                     "items": {
                         "$ref": "#/definitions/IFxRateObservation"
                     }
+                },
+                "dataState": {
+                    "$ref": "#/definitions/LiveBrokerDataState"
                 }
             },
             "required": [
-                "id",
-                "currency",
-                "simulationProfile",
-                "economicTime",
-                "observedAt",
+                "accounting",
                 "broker",
+                "currency",
+                "dataState",
+                "economicTime",
+                "executionCosts",
+                "fx",
+                "id",
+                "observedAt",
                 "portfolio",
-                "fx"
+                "simulationProfile"
             ],
             "additionalProperties": false,
-            "description": "Committed account view; economic time and operational receipt time are deliberately distinct."
+            "description": "HTTP projection adds current source diagnostics without rewriting committed financial evidence."
         },
-        "ISimBrokerServiceProfile": {
+        "IOrderExecutionCostModel": {
             "type": "object",
             "properties": {
-                "id": {
-                    "type": "string",
-                    "description": "Human-readable identity retained with the complete resolved policy.",
-                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"
+                "spread": {
+                    "$ref": "#/definitions/IBacktestSpreadValue"
                 },
                 "slippage": {
                     "$ref": "#/definitions/ICompositeDynamicValue"
                 },
-                "randomness": {
+                "spreadProfileFactor": {
                     "type": "number",
-                    "description": "Probability that an ordinary order receives one injected execution scenario, not its severity.",
-                    "minimum": 0,
-                    "maximum": 1
+                    "minimum": 0
                 },
-                "seed": {
-                    "type": "string",
-                    "description": "Stable experiment seed; account and economic order coordinates isolate deterministic draws.",
-                    "minLength": 1,
-                    "maxLength": 128
-                },
-                "spread": {
-                    "$ref": "#/definitions/ICompositeDynamicValue"
+                "slippageProfileFactor": {
+                    "type": "number",
+                    "minimum": 0
                 }
             },
             "additionalProperties": false,
-            "required": [
-                "id",
-                "randomness",
-                "seed"
-            ],
-            "description": "Standalone policy: full bar-volume capacity is engine-owned; quote-based spread is unavailable."
+            "description": "Execution terms used both to price fills and to budget a marketable entry limit."
+        },
+        "IBacktestSpreadValue": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/ICompositeDynamicValue"
+                },
+                {
+                    "$ref": "#/definitions/IObservedSpreadValue"
+                }
+            ]
         },
         "ICompositeDynamicValue": {
             "anyOf": [
@@ -125,6 +133,424 @@
                 "fixed",
                 "perc"
             ]
+        },
+        "IObservedSpreadValue": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "const": "observed"
+                },
+                "minimumCoverage": {
+                    "type": "number",
+                    "description": "Minimum valid quoted-time ratio required from the latest completed bar."
+                },
+                "maximumAgeMs": {
+                    "type": "number",
+                    "description": "Maximum age of the closing NBBO update at the execution decision."
+                }
+            },
+            "required": [
+                "type",
+                "minimumCoverage",
+                "maximumAgeMs"
+            ],
+            "additionalProperties": false
+        },
+        "ISimBrokerAccounting": {
+            "type": "object",
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                },
+                "economicTime": {
+                    "type": "number",
+                    "minimum": 1
+                },
+                "realizations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ITaxRealization"
+                    }
+                },
+                "distributions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ICorporateActionDistribution"
+                    }
+                },
+                "dividendAccruals": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IDividendAccrual"
+                    }
+                },
+                "realizedPnl": {
+                    "type": "number"
+                },
+                "dividendPnl": {
+                    "type": "number"
+                },
+                "taxPaidCash": {
+                    "type": "number"
+                },
+                "settledTaxYears": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                }
+            },
+            "required": [
+                "sessionId",
+                "economicTime",
+                "realizations",
+                "distributions",
+                "dividendAccruals",
+                "realizedPnl",
+                "dividendPnl",
+                "taxPaidCash",
+                "settledTaxYears"
+            ],
+            "additionalProperties": false,
+            "description": "Complete economic evidence from one broker session; Gu retains tax-policy ownership."
+        },
+        "ITaxRealization": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "identity": {
+                    "type": "string"
+                },
+                "sequence": {
+                    "type": "number"
+                },
+                "time": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "amount",
+                "identity",
+                "sequence",
+                "time"
+            ],
+            "additionalProperties": false
+        },
+        "ICorporateActionDistribution": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Stable identity derived from the action and entitlement side."
+                },
+                "actionId": {
+                    "type": "string",
+                    "description": "Corporate action that created this settlement bucket."
+                },
+                "childPositionId": {
+                    "type": "string",
+                    "description": "Deterministic physical position identity reserved for whole child shares."
+                },
+                "parentSymbol": {
+                    "type": "string"
+                },
+                "childSymbol": {
+                    "type": "string"
+                },
+                "strategyId": {
+                    "type": "string",
+                    "const": "corporate-action-distribution",
+                    "description": "Engine-reserved identity of the pooled physical position."
+                },
+                "currency": {
+                    "type": "string",
+                    "description": "Child instrument and account currencies respectively."
+                },
+                "accountCurrency": {
+                    "type": "string"
+                },
+                "side": {
+                    "$ref": "#/definitions/OrderSide",
+                    "description": "Entitlement side shared by the bucket and all of its allocations."
+                },
+                "signedWholeChildSize": {
+                    "type": "number",
+                    "description": "Signed whole child shares delivered to the physical child position."
+                },
+                "signedFractionalCashInLieuSize": {
+                    "type": "number",
+                    "description": "Signed aggregate fractional child entitlement settled in cash."
+                },
+                "childAvgPrice": {
+                    "type": "number",
+                    "description": "Pooled raw and account-currency basis of the physical child position."
+                },
+                "childAvgLocalPrice": {
+                    "type": "number"
+                },
+                "cashInLieuPrice": {
+                    "type": "number",
+                    "description": "Raw and account-currency barrier prices used for fractional settlement."
+                },
+                "cashInLieuLocalPrice": {
+                    "type": "number"
+                },
+                "cashAdjustment": {
+                    "type": "number",
+                    "description": "Rounded account-currency totals produced by fractional settlement."
+                },
+                "realizedPnl": {
+                    "type": "number"
+                },
+                "allocations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ICorporateActionDistributionAllocation"
+                    },
+                    "description": "Source-lineage allocations ordered by physical source and immediate allocation identity."
+                },
+                "appliedAt": {
+                    "type": "number",
+                    "description": "Causal barrier at which the entitlement was applied."
+                },
+                "appliedSequence": {
+                    "type": "number",
+                    "description": "Account-local causal sequence of the application barrier."
+                }
+            },
+            "required": [
+                "id",
+                "actionId",
+                "childPositionId",
+                "parentSymbol",
+                "childSymbol",
+                "strategyId",
+                "currency",
+                "accountCurrency",
+                "side",
+                "signedWholeChildSize",
+                "signedFractionalCashInLieuSize",
+                "childAvgPrice",
+                "childAvgLocalPrice",
+                "cashInLieuPrice",
+                "cashInLieuLocalPrice",
+                "cashAdjustment",
+                "realizedPnl",
+                "allocations",
+                "appliedAt",
+                "appliedSequence"
+            ],
+            "additionalProperties": false,
+            "description": "Immutable account-level settlement bucket created by one spin-off and one side. A non-zero whole entitlement seeds one pooled physical child position, while allocations preserve logical strategy lineages and fractional settlement."
+        },
+        "OrderSide": {
+            "type": "number",
+            "enum": [
+                1,
+                -1
+            ],
+            "description": "Logical side of the trade from the strategy viewpoint. How this maps to BUY/SELL depends on the instrument type. IMPORTANT: do NOT change these values as they are used in calculations!"
+        },
+        "ICorporateActionDistributionAllocation": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Stable identity derived from the action and immediate source identities."
+                },
+                "sourcePositionId": {
+                    "type": "string",
+                    "description": "Position whose shares created this entitlement."
+                },
+                "sourceAllocationId": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "Immediate beneficial allocation inside a pooled source, or null for a strategy-owned source."
+                },
+                "rootPositionId": {
+                    "type": "string",
+                    "description": "First strategy-created position in this entitlement lineage."
+                },
+                "strategyId": {
+                    "type": "string",
+                    "description": "Strategy that owns the logical source lineage."
+                },
+                "signedChildAllocationSize": {
+                    "type": "number",
+                    "description": "Signed beneficial share of the pooled whole-child position."
+                },
+                "signedFractionalCashInLieuSize": {
+                    "type": "number",
+                    "description": "Signed fractional entitlement settled as cash-in-lieu."
+                },
+                "childAvgPrice": {
+                    "type": "number",
+                    "description": "Child basis transferred from this source lineage in child and account currencies."
+                },
+                "childAvgLocalPrice": {
+                    "type": "number"
+                },
+                "cashAdjustment": {
+                    "type": "number",
+                    "description": "Rounded account-currency cash and realized PnL attributed to this lineage."
+                },
+                "realizedPnl": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "id",
+                "sourcePositionId",
+                "sourceAllocationId",
+                "rootPositionId",
+                "strategyId",
+                "signedChildAllocationSize",
+                "signedFractionalCashInLieuSize",
+                "childAvgPrice",
+                "childAvgLocalPrice",
+                "cashAdjustment",
+                "realizedPnl"
+            ],
+            "additionalProperties": false,
+            "description": "Immutable attribution of one source lineage to a pooled spin-off settlement bucket."
+        },
+        "IDividendAccrual": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "dividendId": {
+                    "type": "string"
+                },
+                "symbol": {
+                    "type": "string"
+                },
+                "physicalPositionId": {
+                    "type": "string"
+                },
+                "rootPositionId": {
+                    "type": "string"
+                },
+                "strategyId": {
+                    "type": "string"
+                },
+                "sourceAllocationId": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "signedUnits": {
+                    "type": "number"
+                },
+                "cashAmountPerUnit": {
+                    "type": "number"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "accountCurrency": {
+                    "type": "string"
+                },
+                "fxRate": {
+                    "type": "number"
+                },
+                "fxObservationFingerprint": {
+                    "type": "string"
+                },
+                "grossAmount": {
+                    "type": "number"
+                },
+                "taxRate": {
+                    "type": "number"
+                },
+                "taxTreatment": {
+                    "$ref": "#/definitions/DividendTaxTreatment"
+                },
+                "exDividendDate": {
+                    "type": "string"
+                },
+                "appliedAt": {
+                    "type": "number"
+                },
+                "appliedSequence": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "id",
+                "dividendId",
+                "symbol",
+                "physicalPositionId",
+                "rootPositionId",
+                "strategyId",
+                "sourceAllocationId",
+                "signedUnits",
+                "cashAmountPerUnit",
+                "currency",
+                "accountCurrency",
+                "fxRate",
+                "fxObservationFingerprint",
+                "grossAmount",
+                "taxRate",
+                "taxTreatment",
+                "exDividendDate",
+                "appliedAt",
+                "appliedSequence"
+            ],
+            "additionalProperties": false,
+            "description": "Immutable journal-local attribution of one dividend amount to one logical lineage."
+        },
+        "DividendTaxTreatment": {
+            "type": "string",
+            "enum": [
+                "taxable",
+                "deductible",
+                "non_deductible"
+            ]
+        },
+        "ISimBrokerServiceProfile": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Human-readable identity retained with the complete resolved policy.",
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"
+                },
+                "slippage": {
+                    "$ref": "#/definitions/ICompositeDynamicValue"
+                },
+                "randomness": {
+                    "type": "number",
+                    "description": "Probability that an ordinary order receives one injected execution scenario, not its severity.",
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                "seed": {
+                    "type": "string",
+                    "description": "Stable experiment seed; account and economic order coordinates isolate deterministic draws.",
+                    "minLength": 1,
+                    "maxLength": 128
+                },
+                "spread": {
+                    "$ref": "#/definitions/ICompositeDynamicValue"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "id",
+                "randomness",
+                "seed"
+            ],
+            "description": "Standalone policy: full bar-volume capacity is engine-owned; quote-based spread is unavailable."
         },
         "IBrokerState": {
             "type": "object",
@@ -419,6 +845,13 @@
                 "filledSize": {
                     "type": "number"
                 },
+                "notional": {
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "description": "Requested amount in quote currency; quantity remains unknown for notional orders."
+                },
                 "observedAt": {
                     "type": "number"
                 },
@@ -426,7 +859,10 @@
                     "type": "string"
                 },
                 "remainingSize": {
-                    "type": "number"
+                    "type": [
+                        "number",
+                        "null"
+                    ]
                 },
                 "side": {
                     "type": "string",
@@ -436,7 +872,10 @@
                     ]
                 },
                 "size": {
-                    "type": "number"
+                    "type": [
+                        "number",
+                        "null"
+                    ]
                 },
                 "status": {
                     "type": "string"
@@ -453,6 +892,7 @@
                 "brokerOrderId",
                 "cancelable",
                 "filledSize",
+                "notional",
                 "observedAt",
                 "orderType",
                 "remainingSize",
@@ -558,7 +998,7 @@
                 },
                 "oco": {
                     "type": "boolean",
-                    "description": "One-cancels-others flag.  Are all orders in the group to be canceled when one is filled?"
+                    "description": "One-cancels-others flag. Are all orders in the group to be canceled when one is filled?"
                 },
                 "createdAt": {
                     "type": "number",
@@ -628,14 +1068,6 @@
             ],
             "additionalProperties": false,
             "description": "Concrete order object created from an execute/stop signal and sent to a broker or simulated in backtests."
-        },
-        "OrderSide": {
-            "type": "number",
-            "enum": [
-                1,
-                -1
-            ],
-            "description": "Logical side of the trade from the strategy viewpoint. How this maps to BUY/SELL depends on the instrument type. IMPORTANT: do NOT change these values as they are used in calculations!"
         },
         "OrderType": {
             "type": "number",
@@ -1461,6 +1893,20 @@
                 "USD",
                 "ZAR"
             ]
+        },
+        "LiveBrokerDataState": {
+            "type": "string",
+            "enum": [
+                "ready",
+                "starting",
+                "waiting",
+                "market-closed",
+                "paused",
+                "recovering",
+                "stalled",
+                "unavailable"
+            ],
+            "description": "Source diagnostics are independent of broker transport and never grant order admission."
         }
     }
 }

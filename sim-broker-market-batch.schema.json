@@ -1,0 +1,661 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/definitions/IHistoricalBarBatch",
+    "definitions": {
+        "IHistoricalBarBatch": {
+            "type": "object",
+            "properties": {
+                "openTime": {
+                    "type": "number"
+                },
+                "closeTime": {
+                    "type": "number"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IHistoricalBarBatchItem"
+                    },
+                    "minItems": 1
+                },
+                "corporateActions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ICorporateAction"
+                    }
+                }
+            },
+            "required": [
+                "openTime",
+                "closeTime",
+                "items",
+                "corporateActions"
+            ],
+            "additionalProperties": false,
+            "description": "Canonical non-partial historical snapshot emitted for one open/close timestamp."
+        },
+        "IHistoricalBarBatchItem": {
+            "type": "object",
+            "properties": {
+                "symbol": {
+                    "type": "string"
+                },
+                "bar": {
+                    "$ref": "#/definitions/IBar"
+                },
+                "orderFlow": {
+                    "$ref": "#/definitions/IOrderFlowBar"
+                },
+                "quoteLiquidity": {
+                    "$ref": "#/definitions/IQuoteLiquidityBar"
+                },
+                "volumeProfileUpdate": {
+                    "$ref": "#/definitions/IVolumeProfileUpdate"
+                },
+                "executionSymbol": {
+                    "type": "string"
+                },
+                "executionBar": {
+                    "$ref": "#/definitions/IBar"
+                },
+                "executionQuoteLiquidity": {
+                    "$ref": "#/definitions/IQuoteLiquidityBar"
+                },
+                "priceTransform": {
+                    "$ref": "#/definitions/IPriceTransform"
+                }
+            },
+            "required": [
+                "symbol",
+                "bar",
+                "executionSymbol",
+                "executionBar",
+                "priceTransform"
+            ],
+            "additionalProperties": false
+        },
+        "IBar": {
+            "type": "object",
+            "properties": {
+                "high": {
+                    "type": "number"
+                },
+                "low": {
+                    "type": "number"
+                },
+                "close": {
+                    "type": "number"
+                },
+                "open": {
+                    "type": "number"
+                },
+                "index": {
+                    "type": "number"
+                },
+                "dayIndex": {
+                    "type": "number"
+                },
+                "sessionIndex": {
+                    "$ref": "#/definitions/IBarSessionIndex"
+                },
+                "time": {
+                    "type": "number"
+                },
+                "timeEnd": {
+                    "type": "number"
+                },
+                "timeframe": {
+                    "$ref": "#/definitions/Timeframe"
+                },
+                "volume": {
+                    "type": "number"
+                },
+                "trades": {
+                    "type": "number"
+                },
+                "tradeSymbol": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "close",
+                "dayIndex",
+                "high",
+                "index",
+                "low",
+                "open",
+                "sessionIndex",
+                "time",
+                "timeEnd",
+                "timeframe",
+                "volume"
+            ],
+            "additionalProperties": false
+        },
+        "IBarSessionIndex": {
+            "type": "object",
+            "properties": {
+                "jp": {
+                    "type": "number"
+                },
+                "gb": {
+                    "type": "number"
+                },
+                "us": {
+                    "type": "number"
+                },
+                "au": {
+                    "type": "number"
+                }
+            },
+            "additionalProperties": false
+        },
+        "Timeframe": {
+            "type": "string",
+            "enum": [
+                "1S",
+                "5S",
+                "10S",
+                "30S",
+                "45S",
+                "1",
+                "2",
+                "3",
+                "5",
+                "10",
+                "15",
+                "30",
+                "45",
+                "60",
+                "120",
+                "180",
+                "240",
+                "1D",
+                "1W",
+                "1M",
+                "3M",
+                "6M",
+                "12M"
+            ],
+            "description": "Timeframe"
+        },
+        "IOrderFlowBar": {
+            "type": "object",
+            "properties": {
+                "time": {
+                    "type": "number"
+                },
+                "timeEnd": {
+                    "type": "number"
+                },
+                "timeframe": {
+                    "$ref": "#/definitions/Timeframe"
+                },
+                "buyVolume": {
+                    "type": "number"
+                },
+                "sellVolume": {
+                    "type": "number"
+                },
+                "unknownVolume": {
+                    "type": "number"
+                },
+                "buyTrades": {
+                    "type": "number"
+                },
+                "sellTrades": {
+                    "type": "number"
+                },
+                "unknownTrades": {
+                    "type": "number"
+                },
+                "totalVolume": {
+                    "type": "number"
+                },
+                "delta": {
+                    "type": "number"
+                },
+                "cumulativeDelta": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "time",
+                "timeEnd",
+                "timeframe",
+                "buyVolume",
+                "sellVolume",
+                "unknownVolume",
+                "buyTrades",
+                "sellTrades",
+                "unknownTrades",
+                "totalVolume",
+                "delta",
+                "cumulativeDelta"
+            ],
+            "additionalProperties": false,
+            "description": "Aggressor-classified order-flow totals aligned to one completed market bar."
+        },
+        "IQuoteLiquidityBar": {
+            "type": "object",
+            "properties": {
+                "time": {
+                    "type": "number"
+                },
+                "timeEnd": {
+                    "type": "number"
+                },
+                "timeframe": {
+                    "$ref": "#/definitions/Timeframe"
+                },
+                "closeQuoteTime": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "closeBid": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "closeAsk": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "closeSpread": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "closeSpreadBps": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "validDurationMs": {
+                    "type": "number"
+                },
+                "timeWeightedSpreadBps": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "coverage": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "time",
+                "timeEnd",
+                "timeframe",
+                "closeQuoteTime",
+                "closeBid",
+                "closeAsk",
+                "closeSpread",
+                "closeSpreadBps",
+                "validDurationMs",
+                "timeWeightedSpreadBps",
+                "coverage"
+            ],
+            "additionalProperties": false,
+            "description": "Causal NBBO liquidity state aligned to one completed market bar."
+        },
+        "IVolumeProfileUpdate": {
+            "type": "object",
+            "properties": {
+                "time": {
+                    "type": "number"
+                },
+                "timeEnd": {
+                    "type": "number"
+                },
+                "levels": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IVolumeProfileLevel"
+                    }
+                }
+            },
+            "required": [
+                "time",
+                "timeEnd",
+                "levels"
+            ],
+            "additionalProperties": false,
+            "description": "Sparse volume-at-price increments aligned to one completed source bar."
+        },
+        "IVolumeProfileLevel": {
+            "type": "object",
+            "properties": {
+                "price": {
+                    "type": "number"
+                },
+                "volume": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "price",
+                "volume"
+            ],
+            "additionalProperties": false,
+            "description": "Traded volume for one price bin."
+        },
+        "IPriceTransform": {
+            "type": "object",
+            "properties": {
+                "priceScale": {
+                    "type": "number",
+                    "description": "Multiplier applied to raw prices and price distances."
+                },
+                "priceOffset": {
+                    "type": "number",
+                    "description": "Additive adjustment applied only to absolute prices."
+                },
+                "quantityScale": {
+                    "type": "number",
+                    "description": "Multiplier that converts reference quantities into raw quantities."
+                }
+            },
+            "required": [
+                "priceScale",
+                "priceOffset",
+                "quantityScale"
+            ],
+            "additionalProperties": false,
+            "description": "Affine mapping between execution/raw units and the causal reference units observed by a strategy at one market timestamp."
+        },
+        "ICorporateAction": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/IAccountingCorporateAction"
+                },
+                {
+                    "$ref": "#/definitions/IUnresolvedCorporateActionAdjustment"
+                }
+            ]
+        },
+        "IAccountingCorporateAction": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/IStockSplitCorporateAction"
+                },
+                {
+                    "$ref": "#/definitions/ISpinOffCorporateAction"
+                }
+            ]
+        },
+        "IStockSplitCorporateAction": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Stable content-derived action identity."
+                },
+                "sourceIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Source row identifiers collapsed into this economic event."
+                },
+                "kind": {
+                    "type": "string",
+                    "const": "stockSplit"
+                },
+                "symbol": {
+                    "type": "string"
+                },
+                "providerSymbol": {
+                    "type": "string",
+                    "description": "Exact provider ticker retained separately from the immutable instrument ID."
+                },
+                "market": {
+                    "$ref": "#/definitions/MarketRegion",
+                    "description": "Frozen market session used to derive the causal barrier timestamp."
+                },
+                "sessionProfileId": {
+                    "type": "string",
+                    "description": "Frozen instrument-session profile owning the action date boundary."
+                },
+                "effectiveAt": {
+                    "type": "number",
+                    "description": "First instant at which the action is observable by the engine."
+                },
+                "executionDate": {
+                    "type": "string",
+                    "description": "Canonical exchange-local execution date in YYYY-MM-DD form."
+                },
+                "splitFrom": {
+                    "type": "number"
+                },
+                "splitTo": {
+                    "type": "number"
+                },
+                "quantityScale": {
+                    "type": "number",
+                    "description": "Raw shares after the event divided by raw shares before the event."
+                }
+            },
+            "required": [
+                "effectiveAt",
+                "executionDate",
+                "id",
+                "kind",
+                "market",
+                "providerSymbol",
+                "quantityScale",
+                "sessionProfileId",
+                "sourceIds",
+                "splitFrom",
+                "splitTo",
+                "symbol"
+            ],
+            "additionalProperties": false,
+            "description": "A same-security stock split supported by the historical accounting engine."
+        },
+        "MarketRegion": {
+            "type": "string",
+            "enum": [
+                "jp",
+                "gb",
+                "us",
+                "au"
+            ]
+        },
+        "ISpinOffCorporateAction": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Stable content-derived action identity."
+                },
+                "sourceIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Source row identifiers collapsed into this economic event."
+                },
+                "kind": {
+                    "type": "string",
+                    "const": "spinOff"
+                },
+                "symbol": {
+                    "type": "string"
+                },
+                "providerSymbol": {
+                    "type": "string",
+                    "description": "Exact provider ticker retained separately from the immutable instrument ID."
+                },
+                "market": {
+                    "$ref": "#/definitions/MarketRegion",
+                    "description": "Frozen market session used to derive the causal barrier timestamp."
+                },
+                "sessionProfileId": {
+                    "type": "string",
+                    "description": "Frozen instrument-session profile owning the action date boundary."
+                },
+                "effectiveAt": {
+                    "type": "number",
+                    "description": "First instant at which the action is observable by the engine."
+                },
+                "executionDate": {
+                    "type": "string",
+                    "description": "Canonical exchange-local execution date in YYYY-MM-DD form."
+                },
+                "recordDate": {
+                    "type": "string",
+                    "description": "Record date used by the issuer to determine distribution entitlement."
+                },
+                "entitlementPolicy": {
+                    "type": "string",
+                    "const": "regularWayPositionImmediatelyBeforeExDistribution",
+                    "description": "Regular-way shares carry their due-bill entitlement through the ex-distribution barrier."
+                },
+                "childSymbol": {
+                    "type": "string",
+                    "description": "Canonical child security distributed by the parent issuer."
+                },
+                "childProviderSymbol": {
+                    "type": "string"
+                },
+                "childSharesPerParent": {
+                    "type": "number",
+                    "description": "Child shares distributed for each pre-event parent share."
+                },
+                "parentPriceScale": {
+                    "type": "number",
+                    "description": "Scale mapping pre-event parent prices onto the post-event raw price domain."
+                },
+                "basisAllocationPolicy": {
+                    "type": "string",
+                    "const": "relativeFairValueAtFirstJointRegularOpen",
+                    "description": "Causal policy used to allocate parent basis once real joint opening marks are observable."
+                },
+                "fractionalSharePolicy": {
+                    "type": "string",
+                    "const": "cashInLieuAtFirstJointRegularOpen",
+                    "description": "Deterministic treatment required when the distribution produces child fractions."
+                }
+            },
+            "required": [
+                "basisAllocationPolicy",
+                "childProviderSymbol",
+                "childSharesPerParent",
+                "childSymbol",
+                "effectiveAt",
+                "entitlementPolicy",
+                "executionDate",
+                "fractionalSharePolicy",
+                "id",
+                "kind",
+                "market",
+                "parentPriceScale",
+                "providerSymbol",
+                "recordDate",
+                "sessionProfileId",
+                "sourceIds",
+                "symbol"
+            ],
+            "additionalProperties": false,
+            "description": "A parent-to-child security distribution supported by historical accounting."
+        },
+        "IUnresolvedCorporateActionAdjustment": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Stable content-derived action identity."
+                },
+                "sourceIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Source row identifiers collapsed into this economic event."
+                },
+                "kind": {
+                    "type": "string",
+                    "const": "unresolvedAdjustment"
+                },
+                "symbol": {
+                    "type": "string"
+                },
+                "providerSymbol": {
+                    "type": "string",
+                    "description": "Exact provider ticker retained separately from the immutable instrument ID."
+                },
+                "market": {
+                    "$ref": "#/definitions/MarketRegion",
+                    "description": "Frozen market session used to derive the causal barrier timestamp."
+                },
+                "sessionProfileId": {
+                    "type": "string",
+                    "description": "Frozen instrument-session profile owning the action date boundary."
+                },
+                "effectiveAt": {
+                    "type": "number",
+                    "description": "First instant at which the action is observable by the engine."
+                },
+                "executionDate": {
+                    "type": "string",
+                    "description": "Canonical exchange-local execution date in YYYY-MM-DD form."
+                },
+                "adjustmentType": {
+                    "type": "string",
+                    "enum": [
+                        "forward_split",
+                        "reverse_split",
+                        "stock_dividend"
+                    ],
+                    "description": "Exact provider adjustment label retained for provenance and drift detection."
+                },
+                "splitFrom": {
+                    "type": "number",
+                    "description": "Exact provider ratio numerator retained without inferring share economics."
+                },
+                "splitTo": {
+                    "type": "number",
+                    "description": "Exact provider ratio denominator retained without inferring share economics."
+                },
+                "historicalAdjustmentFactor": {
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "description": "Provider history factor retained for exact provenance when available."
+                },
+                "priceScale": {
+                    "type": "number",
+                    "description": "Scale used only to preserve the causal reference-price domain."
+                }
+            },
+            "required": [
+                "adjustmentType",
+                "effectiveAt",
+                "executionDate",
+                "historicalAdjustmentFactor",
+                "id",
+                "kind",
+                "market",
+                "priceScale",
+                "providerSymbol",
+                "sessionProfileId",
+                "sourceIds",
+                "splitFrom",
+                "splitTo",
+                "symbol"
+            ],
+            "additionalProperties": false,
+            "description": "A provider price adjustment whose accounting economics are not classified yet."
+        }
+    }
+}

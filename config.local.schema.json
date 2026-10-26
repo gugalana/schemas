@@ -85,6 +85,10 @@
                 },
                 "research": {
                     "type": "string"
+                },
+                "strategyProjects": {
+                    "type": "string",
+                    "description": "Root containing one independently versioned repository per strategy series."
                 }
             },
             "required": [
@@ -93,7 +97,8 @@
                 "market",
                 "operations",
                 "reference",
-                "research"
+                "research",
+                "strategyProjects"
             ],
             "additionalProperties": false,
             "description": "Local research keeps its documents and economic journals under one selected owner."
@@ -448,7 +453,7 @@
             "type": "string",
             "enum": [
                 "standard",
-                "research",
+                "strategy",
                 "oracle"
             ]
         },

@@ -261,9 +261,7 @@
             "description": "Trading account representation accepted at the external configuration boundary."
         },
         "StrategySlug": {
-            "type": "string",
-            "const": "argo.quality-wide-target",
-            "description": "Public production strategy slug type."
+            "type": "string"
         },
         "ICompositeValue": {
             "type": "object",

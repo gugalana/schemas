@@ -307,7 +307,7 @@
             "type": "string",
             "enum": [
                 "standard",
-                "research",
+                "strategy",
                 "oracle"
             ]
         },

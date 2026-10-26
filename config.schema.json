@@ -95,6 +95,10 @@
                         "delayed"
                     ],
                     "description": "Massive subscription tier: delayed delivers the original market timestamps 15 minutes later."
+                },
+                "collectTradesAndQuotes": {
+                    "type": "boolean",
+                    "description": "Collect optional trades and quotes through WebSocket and REST recovery for Delta and Volume Profile. Enabled when omitted. Disable if your subscription excludes them; OHLC continues and intentionally absent features produce no warnings. Historical file imports have separate settings."
                 }
             },
             "required": [
@@ -336,9 +340,7 @@
             ]
         },
         "StrategySlug": {
-            "type": "string",
-            "const": "argo.quality-wide-target",
-            "description": "Public production strategy slug type."
+            "type": "string"
         },
         "TaxCollectionMode": {
             "type": "string",

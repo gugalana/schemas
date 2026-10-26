@@ -453,6 +453,13 @@
                 "filledSize": {
                     "type": "number"
                 },
+                "notional": {
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "description": "Requested amount in quote currency; quantity remains unknown for notional orders."
+                },
                 "observedAt": {
                     "type": "number"
                 },
@@ -460,7 +467,10 @@
                     "type": "string"
                 },
                 "remainingSize": {
-                    "type": "number"
+                    "type": [
+                        "number",
+                        "null"
+                    ]
                 },
                 "side": {
                     "type": "string",
@@ -470,7 +480,10 @@
                     ]
                 },
                 "size": {
-                    "type": "number"
+                    "type": [
+                        "number",
+                        "null"
+                    ]
                 },
                 "status": {
                     "type": "string"
@@ -487,6 +500,7 @@
                 "brokerOrderId",
                 "cancelable",
                 "filledSize",
+                "notional",
                 "observedAt",
                 "orderType",
                 "remainingSize",
@@ -592,7 +606,7 @@
                 },
                 "oco": {
                     "type": "boolean",
-                    "description": "One-cancels-others flag.  Are all orders in the group to be canceled when one is filled?"
+                    "description": "One-cancels-others flag. Are all orders in the group to be canceled when one is filled?"
                 },
                 "createdAt": {
                     "type": "number",
