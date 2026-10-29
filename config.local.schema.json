@@ -453,8 +453,7 @@
             "type": "string",
             "enum": [
                 "standard",
-                "strategy",
-                "oracle"
+                "strategy"
             ]
         },
         "ISimBrokerProfile": {
