@@ -138,6 +138,10 @@
                 },
                 "selection": {
                     "$ref": "#/definitions/IInstrumentPoolDynamicSelection"
+                },
+                "schedule": {
+                    "$ref": "#/definitions/IInstrumentPoolSchedule",
+                    "description": "Present only for explicitly authored, independently recalculated steps."
                 }
             },
             "required": [
@@ -157,6 +161,12 @@
                 },
                 {
                     "$ref": "#/definitions/IInstrumentPoolDynamicBaseCommonStocks"
+                },
+                {
+                    "$ref": "#/definitions/IInstrumentPoolDynamicBaseSymbols"
+                },
+                {
+                    "$ref": "#/definitions/IInstrumentPoolDynamicBasePool"
                 }
             ]
         },
@@ -207,6 +217,43 @@
             ],
             "additionalProperties": false
         },
+        "IInstrumentPoolDynamicBaseSymbols": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "const": "symbols"
+                },
+                "symbols": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": [
+                "type",
+                "symbols"
+            ],
+            "additionalProperties": false
+        },
+        "IInstrumentPoolDynamicBasePool": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "const": "pool"
+                },
+                "poolId": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "type",
+                "poolId"
+            ],
+            "additionalProperties": false
+        },
         "IInstrumentPoolDynamicFilters": {
             "type": "object",
             "properties": {
@@ -230,6 +277,12 @@
                 },
                 "shareClassSharesOutstanding": {
                     "$ref": "#/definitions/IInstrumentPoolDynamicShareClassSharesOutstandingFilter"
+                },
+                "gap": {
+                    "$ref": "#/definitions/IInstrumentPoolGapFilter"
+                },
+                "secClassShares": {
+                    "$ref": "#/definitions/IInstrumentPoolSecSharesFilter"
                 }
             },
             "additionalProperties": false
@@ -330,6 +383,56 @@
             },
             "additionalProperties": false
         },
+        "IInstrumentPoolGapFilter": {
+            "type": "object",
+            "properties": {
+                "observation": {
+                    "type": "string",
+                    "enum": [
+                        "premarket-last",
+                        "regular-open",
+                        "minute-close"
+                    ]
+                },
+                "reference": {
+                    "type": "string",
+                    "enum": [
+                        "regular-close",
+                        "extended-close"
+                    ]
+                },
+                "comparison": {
+                    "type": "string",
+                    "enum": [
+                        "gte",
+                        "lte"
+                    ]
+                },
+                "threshold": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "observation",
+                "reference",
+                "comparison",
+                "threshold"
+            ],
+            "additionalProperties": false
+        },
+        "IInstrumentPoolSecSharesFilter": {
+            "type": "object",
+            "properties": {
+                "min": {
+                    "type": "string"
+                },
+                "max": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false,
+            "description": "Reported class counts remain exact integers, distinct from current-profile estimates."
+        },
         "IInstrumentPoolDynamicRanking": {
             "type": "object",
             "properties": {
@@ -385,6 +488,37 @@
                 }
             },
             "additionalProperties": false
+        },
+        "IInstrumentPoolSchedule": {
+            "type": "object",
+            "properties": {
+                "cadence": {
+                    "type": "string",
+                    "enum": [
+                        "session",
+                        "week",
+                        "month",
+                        "minutes"
+                    ]
+                },
+                "window": {
+                    "type": "string",
+                    "enum": [
+                        "premarket",
+                        "regular",
+                        "both"
+                    ]
+                },
+                "everyMinutes": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "cadence",
+                "window"
+            ],
+            "additionalProperties": false,
+            "description": "An explicit exchange-calendar cadence, independent of metric lookbacks."
         },
         "IInstrumentPoolEventDriven": {
             "type": "object",

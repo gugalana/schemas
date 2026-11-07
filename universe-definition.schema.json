@@ -1,0 +1,433 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/definitions/IUniverseDefinition",
+    "definitions": {
+        "IUniverseDefinition": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "base": {
+                    "$ref": "#/definitions/IInstrumentPoolDynamicBase"
+                },
+                "steps": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IUniverseStep"
+                    }
+                }
+            },
+            "required": [
+                "id",
+                "name",
+                "base",
+                "steps"
+            ],
+            "additionalProperties": false,
+            "description": "Editable desktop definition. A saved version freezes this whole document."
+        },
+        "IInstrumentPoolDynamicBase": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/IInstrumentPoolDynamicBaseMembership"
+                },
+                {
+                    "$ref": "#/definitions/IInstrumentPoolDynamicBaseCategory"
+                },
+                {
+                    "$ref": "#/definitions/IInstrumentPoolDynamicBaseCommonStocks"
+                },
+                {
+                    "$ref": "#/definitions/IInstrumentPoolDynamicBaseSymbols"
+                },
+                {
+                    "$ref": "#/definitions/IInstrumentPoolDynamicBasePool"
+                }
+            ]
+        },
+        "IInstrumentPoolDynamicBaseMembership": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "const": "membership"
+                },
+                "source": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "type",
+                "source"
+            ],
+            "additionalProperties": false
+        },
+        "IInstrumentPoolDynamicBaseCategory": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "const": "category"
+                },
+                "category": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "type",
+                "category"
+            ],
+            "additionalProperties": false
+        },
+        "IInstrumentPoolDynamicBaseCommonStocks": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "const": "common-stocks"
+                }
+            },
+            "required": [
+                "type"
+            ],
+            "additionalProperties": false
+        },
+        "IInstrumentPoolDynamicBaseSymbols": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "const": "symbols"
+                },
+                "symbols": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": [
+                "type",
+                "symbols"
+            ],
+            "additionalProperties": false
+        },
+        "IInstrumentPoolDynamicBasePool": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "const": "pool"
+                },
+                "poolId": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "type",
+                "poolId"
+            ],
+            "additionalProperties": false
+        },
+        "IUniverseStep": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "filters": {
+                    "$ref": "#/definitions/IInstrumentPoolDynamicFilters"
+                },
+                "ranking": {
+                    "$ref": "#/definitions/IInstrumentPoolDynamicRanking"
+                },
+                "selection": {
+                    "$ref": "#/definitions/IInstrumentPoolDynamicSelection"
+                },
+                "schedule": {
+                    "$ref": "#/definitions/IInstrumentPoolSchedule"
+                }
+            },
+            "required": [
+                "id",
+                "name",
+                "filters",
+                "schedule"
+            ],
+            "additionalProperties": false
+        },
+        "IInstrumentPoolDynamicFilters": {
+            "type": "object",
+            "properties": {
+                "locale": {
+                    "type": "string"
+                },
+                "minPrice": {
+                    "type": "number"
+                },
+                "maxPrice": {
+                    "type": "number"
+                },
+                "liquidity": {
+                    "$ref": "#/definitions/IInstrumentPoolDynamicLiquidityFilter"
+                },
+                "volatility": {
+                    "$ref": "#/definitions/IInstrumentPoolDynamicVolatilityFilter"
+                },
+                "activity": {
+                    "$ref": "#/definitions/IInstrumentPoolDynamicActivityFilter"
+                },
+                "shareClassSharesOutstanding": {
+                    "$ref": "#/definitions/IInstrumentPoolDynamicShareClassSharesOutstandingFilter"
+                },
+                "gap": {
+                    "$ref": "#/definitions/IInstrumentPoolGapFilter"
+                },
+                "secClassShares": {
+                    "$ref": "#/definitions/IInstrumentPoolSecSharesFilter"
+                }
+            },
+            "additionalProperties": false
+        },
+        "IInstrumentPoolDynamicLiquidityFilter": {
+            "type": "object",
+            "properties": {
+                "lookbackDays": {
+                    "type": "number"
+                },
+                "minMedianDollarVolume": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "lookbackDays"
+            ],
+            "additionalProperties": false
+        },
+        "IInstrumentPoolDynamicVolatilityFilter": {
+            "type": "object",
+            "properties": {
+                "metric": {
+                    "type": "string",
+                    "const": "atrPercent"
+                },
+                "lookbackDays": {
+                    "type": "number"
+                },
+                "min": {
+                    "type": "number"
+                },
+                "max": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "metric",
+                "lookbackDays"
+            ],
+            "additionalProperties": false
+        },
+        "IInstrumentPoolDynamicActivityFilter": {
+            "type": "object",
+            "properties": {
+                "window": {
+                    "type": "string",
+                    "enum": [
+                        "prevday",
+                        "premarket"
+                    ]
+                },
+                "minPrice": {
+                    "type": "number"
+                },
+                "maxPrice": {
+                    "type": "number"
+                },
+                "minVolume": {
+                    "type": "number"
+                },
+                "minDollarVolume": {
+                    "type": "number"
+                },
+                "minAbsMovePercent": {
+                    "type": "number"
+                },
+                "minGapPercent": {
+                    "type": "number"
+                },
+                "minRangePercent": {
+                    "type": "number"
+                },
+                "minRelativeVolume": {
+                    "type": "number"
+                },
+                "relativeVolumeLookbackDays": {
+                    "type": "number"
+                },
+                "minVolumeShareClassSharesOutstandingMultiple": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "window"
+            ],
+            "additionalProperties": false
+        },
+        "IInstrumentPoolDynamicShareClassSharesOutstandingFilter": {
+            "type": "object",
+            "properties": {
+                "min": {
+                    "type": "number"
+                },
+                "max": {
+                    "type": "number"
+                }
+            },
+            "additionalProperties": false
+        },
+        "IInstrumentPoolGapFilter": {
+            "type": "object",
+            "properties": {
+                "observation": {
+                    "type": "string",
+                    "enum": [
+                        "premarket-last",
+                        "regular-open",
+                        "minute-close"
+                    ]
+                },
+                "reference": {
+                    "type": "string",
+                    "enum": [
+                        "regular-close",
+                        "extended-close"
+                    ]
+                },
+                "comparison": {
+                    "type": "string",
+                    "enum": [
+                        "gte",
+                        "lte"
+                    ]
+                },
+                "threshold": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "observation",
+                "reference",
+                "comparison",
+                "threshold"
+            ],
+            "additionalProperties": false
+        },
+        "IInstrumentPoolSecSharesFilter": {
+            "type": "object",
+            "properties": {
+                "min": {
+                    "type": "string"
+                },
+                "max": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false,
+            "description": "Reported class counts remain exact integers, distinct from current-profile estimates."
+        },
+        "IInstrumentPoolDynamicRanking": {
+            "type": "object",
+            "properties": {
+                "by": {
+                    "type": "string",
+                    "enum": [
+                        "medianDollarVolume",
+                        "activityDollarVolume",
+                        "activityGapPercent",
+                        "activityScore"
+                    ]
+                },
+                "direction": {
+                    "type": "string",
+                    "enum": [
+                        "asc",
+                        "desc"
+                    ]
+                }
+            },
+            "required": [
+                "by"
+            ],
+            "additionalProperties": false
+        },
+        "IInstrumentPoolDynamicSelection": {
+            "type": "object",
+            "properties": {
+                "top": {
+                    "type": "number"
+                },
+                "correlation": {
+                    "type": "object",
+                    "properties": {
+                        "lookbackDays": {
+                            "type": "number"
+                        },
+                        "threshold": {
+                            "type": "number"
+                        },
+                        "maxCorrelatedSelected": {
+                            "type": "number"
+                        },
+                        "preselect": {
+                            "type": "number"
+                        }
+                    },
+                    "required": [
+                        "lookbackDays",
+                        "threshold"
+                    ],
+                    "additionalProperties": false
+                }
+            },
+            "additionalProperties": false
+        },
+        "IInstrumentPoolSchedule": {
+            "type": "object",
+            "properties": {
+                "cadence": {
+                    "type": "string",
+                    "enum": [
+                        "session",
+                        "week",
+                        "month",
+                        "minutes"
+                    ]
+                },
+                "window": {
+                    "type": "string",
+                    "enum": [
+                        "premarket",
+                        "regular",
+                        "both"
+                    ]
+                },
+                "everyMinutes": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "cadence",
+                "window"
+            ],
+            "additionalProperties": false,
+            "description": "An explicit exchange-calendar cadence, independent of metric lookbacks."
+        }
+    }
+}
